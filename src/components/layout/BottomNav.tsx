@@ -17,7 +17,7 @@ export function BottomNav({ navItems }: BottomNavProps) {
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-20 flex">
       {items.map((item) => {
-        const isActive = pathname.startsWith(item.href)
+        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
         const Icon = item.icon
         return (
           <Link

@@ -22,7 +22,7 @@ export function Header({ navItems }: HeaderProps) {
   const { data: session } = useSession()
 
   // Derive page title from current route
-  const currentNav = navItems.find((item) => pathname.startsWith(item.href))
+  const currentNav = navItems.find((item) => pathname === item.href || pathname.startsWith(item.href + '/'))
   const title = currentNav?.label ?? 'Root.VCR'
 
   const user = session?.user

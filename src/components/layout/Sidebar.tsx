@@ -22,7 +22,7 @@ export function Sidebar({ navItems }: SidebarProps) {
       {/* Nav Items */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href)
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const Icon = item.icon
           return (
             <Link
