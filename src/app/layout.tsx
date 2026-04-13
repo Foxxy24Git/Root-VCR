@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
 import { Providers } from "@/components/Providers";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+  src: "./fonts/Geist-Variable.woff2",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
+  src: "./fonts/GeistMono-Variable.woff2",
   variable: "--font-geist-mono",
   weight: "100 900",
 });
@@ -29,12 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={cn("font-sans", geist.variable)}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
+    <html lang="id" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body>
+        <Providers>
+          <TooltipProvider delay={100}>
+            {children}
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
 }
+

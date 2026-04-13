@@ -3,14 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import type { NavItem } from './nav-config'
+import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
 
 interface SidebarProps {
-  navItems: NavItem[]
+  role: 'admin' | 'reseller'
 }
 
-export function Sidebar({ navItems }: SidebarProps) {
+export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname()
+  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
 
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-[240px] bg-white border-r border-gray-200 z-20">

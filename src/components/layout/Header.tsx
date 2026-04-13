@@ -11,15 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { NavItem } from './nav-config'
+import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
 
 interface HeaderProps {
-  navItems: NavItem[]
+  role: 'admin' | 'reseller'
 }
 
-export function Header({ navItems }: HeaderProps) {
+export function Header({ role }: HeaderProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
 
   // Derive page title from current route
   const currentNav = navItems.find((item) => pathname === item.href || pathname.startsWith(item.href + '/'))

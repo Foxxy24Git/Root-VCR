@@ -3,14 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import type { NavItem } from './nav-config'
+import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
 
 interface BottomNavProps {
-  navItems: NavItem[]
+  role: 'admin' | 'reseller'
 }
 
-export function BottomNav({ navItems }: BottomNavProps) {
+export function BottomNav({ role }: BottomNavProps) {
   const pathname = usePathname()
+  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
   // Cap at 4 items for mobile nav
   const items = navItems.slice(0, 4)
 
