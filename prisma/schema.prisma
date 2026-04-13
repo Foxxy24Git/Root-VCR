@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  admin
+  reseller
+}
+
+enum VoucherStatus {
+  unused
+  active
+  expired
+  deleted
+}
+
+enum WalletLogType {
+  topup
+  deduct
+  generate
+  refund
+  adjustment
+}
+
+// ─────────────────────────────────────────────────────────────
+// Users
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  password_hash  String
+  name           String    @db.VarChar(100)
+  role           Role
+  phone          String?   @db.VarChar(20)
+  location       String?   @db.VarChar(255)
+  avatar_url     String?   @db.VarChar(500)
+  is_active      Boolean   @default(true)
+  is_frozen      Boolean   @default(false)
+  fee_percentage Decimal   @default(0.00) @db.Decimal(5, 2)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  vouchers          Voucher[]
+  wallet            Wallet?
+  reseller_profiles ResellerProfile[]
+  wallet_logs       WalletLog[]       @relation("AdminWalletLogs")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Voucher Profiles (packages)
+// ─────────────────────────────────────────────────────────────
+
+model Profile {
+  id               String   @id @default(uuid())
+  name             String   @db.VarChar(100)
+  duration_days    Int
+  duration_hours   Int      @default(0)
+  price            Decimal  @db.Decimal(12, 2)
+  speed_limit      String?  @db.VarChar(50)
+  mikrotik_profile String   @db.VarChar(100)
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  vouchers          Voucher[]
+  reseller_profiles ResellerProfile[]
+
+  @@map("profiles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Vouchers
+// ─────────────────────────────────────────────────────────────
+
+model Voucher {
+  id              String        @id @default(uuid())
+  code            String        @unique @db.VarChar(50)
+  user_id         String?
+  profile_id      String?
+  status          VoucherStatus @default(unused)
+  price_charged   Decimal       @db.Decimal(12, 2)
+  generated_at    DateTime      @default(now())
+  used_at         DateTime?
+  expired_at      DateTime?
+  client_ip       String?       @db.VarChar(45)
+  client_mac      String?       @db.VarChar(17)
+  mikrotik_synced Boolean       @default(false)
+  created_at      DateTime      @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  profile Profile? @relation(fields: [profile_id], references: [id])
+
+  @@map("vouchers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Wallets
+// ─────────────────────────────────────────────────────────────
+
+model Wallet {
+  id          String   @id @default(uuid())
+  user_id     String   @unique
+  balance     Decimal  @default(0.00) @db.Decimal(15, 2)
+  total_topup Decimal  @default(0.00) @db.Decimal(15, 2)
+  total_spent Decimal  @default(0.00) @db.Decimal(15, 2)
+  updated_at  DateTime @updatedAt
+
+  user User       @relation(fields: [user_id], references: [id])
+  logs WalletLog[]
+
+  @@map("wallets")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Wallet Logs
+// ─────────────────────────────────────────────────────────────
+
+model WalletLog {
+  id             String        @id @default(uuid())
+  wallet_id      String
+  type           WalletLogType
+  amount         Decimal       @db.Decimal(15, 2)
+  balance_before Decimal       @db.Decimal(15, 2)
+  balance_after  Decimal       @db.Decimal(15, 2)
+  description    String?
+  reference_id   String?       @db.Uuid
+  admin_id       String?
+  created_at     DateTime      @default(now())
+
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+  admin  User?  @relation("AdminWalletLogs", fields: [admin_id], references: [id])
+
+  @@map("wallet_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Reseller Profiles (many-to-many: user <-> profile)
+// ─────────────────────────────────────────────────────────────
+
+model ResellerProfile {
+  id         String   @id @default(uuid())
+  user_id    String
+  profile_id String
+  is_enabled Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id])
+  profile Profile @relation(fields: [profile_id], references: [id])
+
+  @@unique([user_id, profile_id])
+  @@map("reseller_profiles")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Settings (key-value store)
+// ─────────────────────────────────────────────────────────────
+
+model Setting {
+  id         String   @id @default(uuid())
+  key        String   @unique @db.VarChar(100)
+  value      String?
+  type       String   @default("string") @db.VarChar(20)
+  updated_at DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PPPoE Users (synced from MikroTik)
+// ─────────────────────────────────────────────────────────────
+
+model PppoeUser {
+  id         String    @id @default(uuid())
+  username   String    @db.VarChar(100)
+  profile    String?   @db.VarChar(100)
+  status     String    @default("inactive") @db.VarChar(20)
+  caller_id  String?   @db.VarChar(50)
+  last_seen  DateTime?
+  synced_at  DateTime  @default(now())
+
+  @@map("pppoe_users")
+}
