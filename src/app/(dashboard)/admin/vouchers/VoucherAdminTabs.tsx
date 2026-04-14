@@ -337,10 +337,10 @@ function AllVouchers({
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 justify-between items-center bg-slate-50/50">
-          <form className="flex flex-col sm:flex-row w-full gap-3" method="GET">
+        <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-3">
+          <form className="flex flex-col gap-3" method="GET">
             <input type="hidden" name="tab" value="vouchers" />
-            <div className="relative flex-1 sm:max-w-xs">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
@@ -350,39 +350,41 @@ function AllVouchers({
                 className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
-            <div className="flex gap-2">
-              <select name="status" defaultValue={statusFilter || "all"} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm w-36 cursor-pointer">
+            <div className="flex flex-wrap gap-2 items-center">
+              <select name="status" defaultValue={statusFilter || "all"} className="flex-1 min-w-[130px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer">
                 <option value="all">Semua Status</option>
                 <option value="unused">Unused</option>
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
                 <option value="deleted">Deleted</option>
               </select>
-              <select name="profileId" defaultValue={profileFilter || "all"} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm min-w-[140px] cursor-pointer">
+              <select name="profileId" defaultValue={profileFilter || "all"} className="flex-1 min-w-[130px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer">
                 <option value="all">Semua Profile</option>
                 {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <button type="submit" className="bg-slate-900 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800">Filter</button>
+              <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 shrink-0">Filter</button>
+              <div className="flex gap-2 shrink-0 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => handleExport("pdf")}
+                  disabled={exporting === "pdf"}
+                  className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                >
+                  {exporting === "pdf" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport("excel")}
+                  disabled={exporting === "excel"}
+                  className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                >
+                  {exporting === "excel" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Excel</span>
+                </button>
+              </div>
             </div>
           </form>
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={() => handleExport("pdf")}
-              disabled={exporting === "pdf"}
-              className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
-            >
-              {exporting === "pdf" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-              PDF
-            </button>
-            <button
-              onClick={() => handleExport("excel")}
-              disabled={exporting === "excel"}
-              className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
-            >
-              {exporting === "excel" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-              Excel
-            </button>
-          </div>
         </div>
 
         {/* Desktop Table */}
@@ -517,14 +519,14 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-sm text-slate-500">Data user PPPoE dari MikroTik.</p>
         <div className="flex items-center gap-3">
           {syncMsg && <p className="text-sm text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">{syncMsg}</p>}
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
+            className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             Sync PPPoE
@@ -533,47 +535,66 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
       </div>
 
       <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
-              <tr>
-                <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Username</th>
-                <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Profile</th>
-                <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-xs">Status</th>
-                <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Last Seen</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {pppoeUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                    <Wifi className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-                    <p className="font-medium text-slate-900">Belum ada data PPPoE</p>
-                    <p className="text-sm mt-1">Klik Sync PPPoE untuk mengambil data dari MikroTik.</p>
-                  </td>
-                </tr>
-              ) : (
-                pppoeUsers.map(u => (
-                  <tr key={u.id} className="hover:bg-slate-50/50">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{u.username}</td>
-                    <td className="px-6 py-4 text-slate-600">{u.profile ?? "-"}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        u.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                        {u.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 text-xs">
-                      {u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "-"}
-                    </td>
+        {pppoeUsers.length === 0 ? (
+          <div className="py-12 text-center text-slate-500 px-4">
+            <Wifi className="w-8 h-8 mx-auto text-slate-300 mb-3" />
+            <p className="font-medium text-slate-900">Belum ada data PPPoE</p>
+            <p className="text-sm mt-1">Klik Sync PPPoE untuk mengambil data dari MikroTik.</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Username</th>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Profile</th>
+                    <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-xs">Status</th>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Last Seen</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pppoeUsers.map(u => (
+                    <tr key={u.id} className="hover:bg-slate-50/50">
+                      <td className="px-6 py-4 font-semibold text-slate-900">{u.username}</td>
+                      <td className="px-6 py-4 text-slate-600">{u.profile ?? "-"}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          u.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          {u.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 text-xs">
+                        {u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Mobile cards */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {pppoeUsers.map(u => (
+                <div key={u.id} className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-semibold text-slate-900">{u.username}</p>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      u.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                    }`}>
+                      {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                      {u.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">{u.profile ?? "-"}</p>
+                  <p className="text-xs text-slate-400 mt-1">{u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "Belum terlihat"}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -601,12 +622,12 @@ export function VoucherAdminTabs({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none justify-center sm:justify-start ${
               activeTab === tab.id
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"

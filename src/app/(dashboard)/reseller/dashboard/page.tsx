@@ -78,18 +78,14 @@ export default async function ResellerDashboard() {
     })
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col gap-2 mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Dashboard
-        </h1>
-        <p className="text-slate-500">
-          Selamat datang kembali, kelola voucher hotspot Anda di sini.
-        </p>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20 md:pb-0">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+        <p className="text-slate-500 text-sm sm:text-base">Selamat datang kembali, kelola voucher hotspot Anda di sini.</p>
       </div>
 
       {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <WalletCard balance={balance} />
 
         <Link href="/reseller/vouchers" className="block">
@@ -102,10 +98,7 @@ export default async function ResellerDashboard() {
           />
         </Link>
 
-        <Link
-          href="/reseller/vouchers?status=active"
-          className="block lg:col-span-1 md:col-span-2"
-        >
+        <Link href="/reseller/vouchers?status=active" className="block sm:col-span-2 lg:col-span-1">
           <StatsCard
             title="Active Users"
             value={activeVouchers}
@@ -115,98 +108,86 @@ export default async function ResellerDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Generate Voucher */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden border border-slate-100">
-            <div className="p-6 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-900">
-                Generate Voucher
-              </h2>
+            <div className="p-5 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900">Generate Voucher</h2>
             </div>
-            <div className="p-6">
-              <GenerateVoucherForm
-                availableProfiles={availableProfiles}
-                currentBalance={balance}
-              />
+            <div className="p-5">
+              <GenerateVoucherForm availableProfiles={availableProfiles} currentBalance={balance} />
             </div>
           </div>
         </div>
 
         {/* Right Column: Vouchers Hari Ini */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden border border-slate-100 flex flex-col h-full">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">
-                Voucher Hari Ini
-              </h2>
-              <a
-                href="/reseller/vouchers"
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-              >
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden border border-slate-100">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Voucher Hari Ini</h2>
+              <a href="/reseller/vouchers" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
                 Lihat Semua
               </a>
             </div>
 
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50/50 text-slate-500 font-medium">
-                  <tr>
-                    <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">
-                      Kode
-                    </th>
-                    <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">
-                      Profile
-                    </th>
-                    <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 font-medium uppercase tracking-wider text-xs">
-                      Harga
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {recentVouchers.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-slate-500"
-                      >
-                        Belum ada voucher yang dibuat hari ini.
-                      </td>
-                    </tr>
-                  ) : (
-                    recentVouchers.map((v) => (
-                      <tr key={v.id} className="hover:bg-slate-50/50">
-                        <td className="px-6 py-4 font-bold text-slate-900 tracking-wider">
-                          {v.code}
-                        </td>
-                        <td className="px-6 py-4">{v.profile?.name ?? "-"}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                              v.status === "active"
-                                ? "bg-green-100 text-green-700"
-                                : v.status === "unused"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : v.status === "expired"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-slate-100 text-slate-700"
-                            }`}
-                          >
-                            {v.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          Rp {Number(v.price_charged).toLocaleString("id-ID")}
-                        </td>
+            {recentVouchers.length === 0 ? (
+              <div className="px-6 py-12 text-center text-slate-500 text-sm">
+                Belum ada voucher yang dibuat hari ini.
+              </div>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50/50 text-slate-500">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider text-xs">Kode</th>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider text-xs">Profile</th>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider text-xs">Status</th>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider text-xs text-right">Harga</th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {recentVouchers.map((v) => (
+                        <tr key={v.id} className="hover:bg-slate-50/50">
+                          <td className="px-5 py-3 font-bold text-slate-900 tracking-wider">{v.code}</td>
+                          <td className="px-5 py-3">{v.profile?.name ?? "-"}</td>
+                          <td className="px-5 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                              v.status === "active" ? "bg-green-100 text-green-700" :
+                              v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
+                              v.status === "expired" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
+                            }`}>{v.status.toUpperCase()}</span>
+                          </td>
+                          <td className="px-5 py-3 text-right">Rp {Number(v.price_charged).toLocaleString("id-ID")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card list */}
+                <div className="sm:hidden divide-y divide-slate-100">
+                  {recentVouchers.map((v) => (
+                    <div key={v.id} className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-slate-900 tracking-wider">{v.code}</p>
+                        <p className="text-xs text-blue-600">{v.profile?.name ?? "-"}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold mb-1 ${
+                          v.status === "active" ? "bg-green-100 text-green-700" :
+                          v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-red-100 text-red-700"
+                        }`}>{v.status.toUpperCase()}</span>
+                        <p className="text-xs font-bold text-slate-900">Rp {Number(v.price_charged).toLocaleString("id-ID")}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

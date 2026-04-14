@@ -114,8 +114,8 @@ export function VoucherDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-0 shadow-2xl">
-        <div className="bg-white">
+      <DialogContent className="sm:max-w-[440px] p-0 border-0 shadow-2xl max-h-[90dvh] flex flex-col overflow-hidden">
+        <div className="bg-white flex flex-col overflow-hidden min-h-0">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <h2 className="text-lg font-bold text-slate-900">Detail Voucher</h2>
@@ -143,9 +143,9 @@ export function VoucherDetailModal({
             </div>
           </div>
 
-          {/* Card View */}
+          {/* Scrollable body */}
           {view === "card" ? (
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-6 text-white shadow-xl overflow-hidden">
                 <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10 blur-2xl" />
                 <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full bg-white/10 blur-xl" />
@@ -197,7 +197,7 @@ export function VoucherDetailModal({
             </div>
           ) : (
             /* Detail View */
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <span className="block text-xs text-slate-400 uppercase tracking-wider mb-2">Kode Voucher</span>
                 <span className="text-2xl font-bold text-slate-900 tracking-widest">{voucher.code}</span>

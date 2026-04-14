@@ -714,12 +714,12 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Sidebar Nav */}
-      <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:w-52 shrink-0">
+      <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible lg:w-52 shrink-0 pb-1 lg:pb-0">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-3 py-2.5 lg:px-4 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
               tab.id === "danger"
                 ? activeTab === tab.id
                   ? "bg-red-600 text-white shadow-sm"
@@ -730,7 +730,7 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
             }`}
           >
             {tab.icon}
-            {tab.label}
+            <span className="hidden xs:inline lg:inline">{tab.label}</span>
           </button>
         ))}
       </nav>

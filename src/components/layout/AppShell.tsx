@@ -14,8 +14,8 @@ export function AppShell({ children, role, logoUrl, companyName }: AppShellProps
     <div className="min-h-screen bg-gray-50">
       <Sidebar role={role} logoUrl={logoUrl} companyName={companyName} />
       <Header role={role} />
-      {/* pt-14 clears fixed header (h-14); pb-16 lg:pb-0 clears BottomNav on mobile */}
-      <main className="lg:ml-[240px] pt-14 pb-16 lg:pb-0 min-h-screen">
+      {/* pt-14 clears fixed header (h-14); pb-20 lg:pb-0 clears BottomNav on mobile */}
+      <main className="lg:ml-[240px] pt-14 pb-20 lg:pb-0 min-h-screen">
         <div className="p-4 lg:p-6">
           {children}
         </div>
