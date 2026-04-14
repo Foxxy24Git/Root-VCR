@@ -25,15 +25,15 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-0">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
-        <p className="text-slate-500 mt-1">Kelola profil dan keamanan akun Anda.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Kelola profil dan keamanan akun Anda.</p>
       </div>
 
       <div className="space-y-6">
         {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="text-lg font-bold text-slate-900">Informasi Profil</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Informasi Profil</h2>
           </div>
           <div className="p-6">
             <ResellerProfileForm user={user} />
@@ -41,10 +41,10 @@ export default async function SettingsPage() {
         </div>
 
         {/* Security Card */}
-        <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 bg-slate-50/50 dark:bg-slate-900/20">
             <Lock className="text-blue-600 w-5 h-5" />
-            <h2 className="text-lg font-bold text-slate-900">Keamanan (Ubah Password)</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Keamanan (Ubah Password)</h2>
           </div>
           <div className="p-6">
             <ChangePasswordForm />

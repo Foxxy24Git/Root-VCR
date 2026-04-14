@@ -14,7 +14,7 @@ export function BottomNav({ role }: BottomNavProps) {
   const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20 flex safe-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-20 flex safe-bottom transition-colors duration-200">
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
         const Icon = item.icon
@@ -24,7 +24,9 @@ export function BottomNav({ role }: BottomNavProps) {
             href={item.href}
             className={cn(
               'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] text-[10px] font-medium transition-colors',
-              isActive ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+              isActive
+                ? 'text-primary'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />

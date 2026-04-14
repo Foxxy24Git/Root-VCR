@@ -24,8 +24,6 @@ export function VoucherSuccessModal({
   onOpenChange,
   vouchers,
 }: VoucherSuccessModalProps) {
-  // If there are multiple vouchers (bulk), just handle the first one visually for now,
-  // or show a list. The PRD mostly shows single generation flow "Card Mode".
   const voucher = vouchers[0]
 
   const handleCopy = async () => {
@@ -51,59 +49,59 @@ export function VoucherSuccessModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-0 shadow-2xl">
-        <div className="relative p-6 pt-10 text-center bg-white flex flex-col items-center">
-          
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
+        <div className="relative p-6 pt-10 text-center bg-white dark:bg-slate-800 flex flex-col items-center">
+
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          
-          <h2 className="text-2xl font-bold text-slate-900 mb-1">SUCCESS</h2>
-          <p className="text-slate-500 mb-6">Voucher ready for use</p>
 
-          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 relative">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">SUCCESS</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">Voucher ready for use</p>
+
+          <div className="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-5 mb-6 relative">
             {/* Dashed line effect */}
             <div className="absolute top-0 bottom-0 left-[-8px] flex flex-col justify-between py-2">
                {[...Array(6)].map((_, i) => (
-                 <div key={i} className="w-2 h-4 bg-white rounded-r-full border-r border-y border-slate-200" />
+                 <div key={i} className="w-2 h-4 bg-white dark:bg-slate-800 rounded-r-full border-r border-y border-slate-200 dark:border-slate-600" />
                ))}
             </div>
             <div className="absolute top-0 bottom-0 right-[-8px] flex flex-col justify-between py-2">
                {[...Array(6)].map((_, i) => (
-                 <div key={i} className="w-2 h-4 bg-white rounded-l-full border-l border-y border-slate-200" />
+                 <div key={i} className="w-2 h-4 bg-white dark:bg-slate-800 rounded-l-full border-l border-y border-slate-200 dark:border-slate-600" />
                ))}
             </div>
 
-            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
               KODE VOUCHER
             </div>
-            <div className="bg-white border-2 border-slate-200 rounded-lg py-3 px-4 mx-auto max-w-[200px] mb-4">
-              <span className="text-xl font-bold text-slate-900 tracking-widest">{voucher.code}</span>
+            <div className="bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg py-3 px-4 mx-auto max-w-[200px] mb-4">
+              <span className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
             </div>
 
-            <div className="text-sm text-slate-600 space-y-1 mt-4 border-t border-dashed border-slate-300 pt-4">
-              <p>Profile: <span className="font-semibold text-slate-900">{voucher.profileName}</span></p>
-              <p>Masa Aktif: <span className="font-semibold text-slate-900">{voucher.durationDays} Jam</span></p>
+            <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1 mt-4 border-t border-dashed border-slate-300 dark:border-slate-600 pt-4">
+              <p>Profile: <span className="font-semibold text-slate-900 dark:text-slate-100">{voucher.profileName}</span></p>
+              <p>Masa Aktif: <span className="font-semibold text-slate-900 dark:text-slate-100">{voucher.durationDays} Jam</span></p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 w-full mb-4">
             <button
               onClick={handleCopy}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold transition-colors"
             >
               <Copy className="w-4 h-4" /> Salin
             </button>
             <button
               onClick={handleShareWhatsApp}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-transparent bg-green-50 hover:bg-green-100 text-green-700 font-semibold transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-transparent bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-400 font-semibold transition-colors"
             >
               <Share2 className="w-4 h-4" /> Share WA
             </button>
           </div>
-          
+
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors mt-2"
+            className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-semibold transition-colors mt-2"
           >
             DONE, BACK TO DASHBOARD
           </button>

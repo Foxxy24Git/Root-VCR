@@ -61,56 +61,56 @@ export default async function AdminResellersPage() {
   }))
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0 animate-slide-up">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Manajemen Reseller</h1>
-        <p className="text-slate-500 mt-1">Kelola akun reseller, saldo, dan status akun.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Manajemen Reseller</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Kelola akun reseller, saldo, dan status akun.</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{resellers.length}</p>
-          <p className="text-xs text-slate-400 mt-1">Reseller terdaftar</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{resellers.length}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Reseller terdaftar</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Aktif</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Aktif</span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{totalActive}</p>
-          <p className="text-xs text-slate-400 mt-1">Reseller aktif</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{totalActive}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Reseller aktif</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Snowflake className="w-5 h-5 text-blue-500" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+              <Snowflake className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Frozen</span>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Frozen</span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{totalFrozen}</p>
-          <p className="text-xs text-slate-400 mt-1">Akun dibekukan</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{totalFrozen}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Akun dibekukan</p>
         </div>
         <Link href="/admin/revenue" className="block hover:-translate-y-0.5 transition-transform">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 h-full">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 h-full">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Omset</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Omset</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(totalOmset)}
             </p>
-            <p className="text-xs text-slate-400 mt-1">Total omset semua reseller</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Total omset semua reseller</p>
           </div>
         </Link>
       </div>

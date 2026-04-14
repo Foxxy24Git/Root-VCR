@@ -83,7 +83,7 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
 
   if (availableProfiles.length === 0) {
     return (
-      <div className="bg-orange-50 text-orange-700 p-4 rounded-xl border border-orange-100 flex items-start gap-3">
+      <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 p-4 rounded-xl border border-orange-100 dark:border-orange-800/50 flex items-start gap-3">
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
         <p className="text-sm">Anda belum memiliki akses ke profile VCR apapun. Silakan hubungi Admin.</p>
       </div>
@@ -95,7 +95,7 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
       <form onSubmit={handleGenerate} className="space-y-5 relative">
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex gap-2 items-center">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm border border-red-100 dark:border-red-800/50 flex gap-2 items-center">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -103,14 +103,14 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
               Pilih Profile
             </label>
             <div className="relative">
               <select
                 value={profileId}
                 onChange={(e) => setProfileId(e.target.value)}
-                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer"
+                className="w-full appearance-none bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer"
                 disabled={loading}
               >
                 {availableProfiles.map(p => (
@@ -128,7 +128,7 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 block">
               Jumlah Voucher
             </label>
             <input
@@ -137,17 +137,17 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
               max={100}
               value={quantity}
               onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
               disabled={loading}
             />
           </div>
         </div>
 
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-500">Total Biaya:</span>
+        <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Biaya:</span>
           <span className={cn(
             "text-lg font-bold",
-            isInsufficientBalance ? "text-red-600" : "text-slate-900"
+            isInsufficientBalance ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"
           )}>
             Rp {totalCost.toLocaleString("id-ID")}
           </span>

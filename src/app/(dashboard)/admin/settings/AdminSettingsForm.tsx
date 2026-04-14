@@ -63,6 +63,8 @@ function useSaveSettings() {
   return { save, saving, msg, clearMsg: () => setMsg(null) }
 }
 
+const inputCls = "w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-colors"
+
 // ── Tab: Profile ─────────────────────────────────────────────────────────────
 
 function ProfileTab({ adminUser }: { adminUser: AdminUser }) {
@@ -91,7 +93,6 @@ function ProfileTab({ adminUser }: { adminUser: AdminUser }) {
     try {
       let finalAvatarUrl = avatarUrl
 
-      // Upload avatar if new file selected
       if (avatarFile) {
         const fd = new FormData()
         fd.append("file", avatarFile)
@@ -138,7 +139,7 @@ function ProfileTab({ adminUser }: { adminUser: AdminUser }) {
               alt="Avatar"
               width={80}
               height={80}
-              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
+              className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-lg"
             />
           ) : (
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -155,38 +156,38 @@ function ProfileTab({ adminUser }: { adminUser: AdminUser }) {
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
         </div>
         <div>
-          <p className="font-semibold text-slate-900">{adminUser.name}</p>
-          <p className="text-sm text-slate-500">{adminUser.email}</p>
-          <p className="text-xs text-slate-400 mt-1">Klik ikon kamera untuk ganti foto. Max 2MB (jpg/png/webp).</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">{adminUser.name}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{adminUser.email}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Klik ikon kamera untuk ganti foto. Max 2MB (jpg/png/webp).</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Nama</label>
-          <div className="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-500">{adminUser.name}</div>
-          <p className="text-xs text-slate-400 mt-1">Nama tidak dapat diubah dari sini.</p>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Nama</label>
+          <div className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400">{adminUser.name}</div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Nama tidak dapat diubah dari sini.</p>
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Email</label>
-          <div className="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-500">{adminUser.email}</div>
-          <p className="text-xs text-slate-400 mt-1">Email tidak dapat diubah dari sini.</p>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Email</label>
+          <div className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400">{adminUser.email}</div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Email tidak dapat diubah dari sini.</p>
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">No. Telepon</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">No. Telepon</label>
           <input
             value={form.phone}
             onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="+62 812 3456 7890"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Lokasi / Alamat</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Lokasi / Alamat</label>
           <input
             value={form.location}
             onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="Jakarta, Indonesia"
           />
         </div>
@@ -234,42 +235,42 @@ function MikrotikTab({ settings }: { settings: Settings }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="sm:col-span-2">
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Host / IP MikroTik</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Host / IP MikroTik</label>
           <input
             value={form.mikrotik_host}
             onChange={e => setForm(p => ({ ...p, mikrotik_host: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="192.168.1.1"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">API Port</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">API Port</label>
           <input
             value={form.mikrotik_api_port}
             onChange={e => setForm(p => ({ ...p, mikrotik_api_port: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="8728"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Username</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Username</label>
           <input
             value={form.mikrotik_user}
             onChange={e => setForm(p => ({ ...p, mikrotik_user: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="admin"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Password</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Password</label>
           <div className="relative">
             <input
               type={showPass ? "text" : "password"}
               value={form.mikrotik_pass}
               onChange={e => setForm(p => ({ ...p, mikrotik_pass: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={`${inputCls} pr-10`}
             />
-            <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
@@ -277,18 +278,18 @@ function MikrotikTab({ settings }: { settings: Settings }) {
       </div>
 
       {/* Test Connection */}
-      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
         <button
           type="button"
           onClick={handleTest}
           disabled={testing}
-          className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+          className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
         >
           {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
           Test Koneksi
         </button>
         {testResult && (
-          <span className={`flex items-center gap-1.5 text-sm font-medium ${testResult.ok ? "text-green-700" : "text-red-600"}`}>
+          <span className={`flex items-center gap-1.5 text-sm font-medium ${testResult.ok ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
             {testResult.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
             {testResult.msg}
           </span>
@@ -349,25 +350,25 @@ function HotspotTab({ settings }: { settings: Settings }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Logo Upload */}
       <div>
-        <label className="text-sm font-semibold text-slate-700 block mb-2">Logo Perusahaan</label>
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-2">Logo Perusahaan</label>
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 overflow-hidden">
+          <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-700 overflow-hidden">
             {logoPreview ? (
               <Image src={logoPreview} alt="Logo" width={64} height={64} className="w-full h-full object-contain" />
             ) : (
-              <Globe className="w-6 h-6 text-slate-300" />
+              <Globe className="w-6 h-6 text-slate-300 dark:text-slate-500" />
             )}
           </div>
           <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold"
+              className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
             >
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
               Upload Logo
             </button>
-            <p className="text-xs text-slate-400">jpg/png/webp/svg, max 2MB. Tampil di sidebar.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">jpg/png/webp/svg, max 2MB. Tampil di sidebar.</p>
           </div>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={handleLogoChange} />
         </div>
@@ -375,23 +376,23 @@ function HotspotTab({ settings }: { settings: Settings }) {
 
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Nama Perusahaan</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Nama Perusahaan</label>
           <input
             value={form.company_name}
             onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="Root.VCR Network"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Login URL Hotspot</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Login URL Hotspot</label>
           <input
             value={form.hotspot_login_url}
             onChange={e => setForm(p => ({ ...p, hotspot_login_url: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={inputCls}
             placeholder="http://192.168.1.1/login"
           />
-          <p className="text-xs text-slate-400 mt-1">URL halaman login MikroTik Hotspot.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">URL halaman login MikroTik Hotspot.</p>
         </div>
       </div>
       <SaveBar saving={saving} msg={msg} />
@@ -427,15 +428,15 @@ function BackupTab({ settings }: { settings: Settings }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-5">
         {/* Auto Backup Toggle */}
-        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
           <div>
-            <p className="font-semibold text-slate-900 text-sm">Auto Backup</p>
-            <p className="text-xs text-slate-500 mt-0.5">Backup otomatis database secara berkala</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Auto Backup</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Backup otomatis database secara berkala</p>
           </div>
           <button
             type="button"
             onClick={() => setForm(p => ({ ...p, backup_auto_enabled: p.backup_auto_enabled === "true" ? "false" : "true" }))}
-            className={`relative w-12 h-6 rounded-full transition-colors ${form.backup_auto_enabled === "true" ? "bg-blue-600" : "bg-slate-300"}`}
+            className={`relative w-12 h-6 rounded-full transition-colors ${form.backup_auto_enabled === "true" ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"}`}
           >
             <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.backup_auto_enabled === "true" ? "left-7" : "left-1"}`} />
           </button>
@@ -444,11 +445,11 @@ function BackupTab({ settings }: { settings: Settings }) {
         {form.backup_auto_enabled === "true" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Jadwal Backup</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Jadwal Backup</label>
               <select
                 value={form.backup_schedule}
                 onChange={e => setForm(p => ({ ...p, backup_schedule: e.target.value }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 cursor-pointer outline-none transition-colors"
               >
                 <option value="hourly">Setiap Jam</option>
                 <option value="daily">Harian</option>
@@ -456,31 +457,31 @@ function BackupTab({ settings }: { settings: Settings }) {
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1.5">Retensi (hari)</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Retensi (hari)</label>
               <input
                 type="number"
                 min={1}
                 max={90}
                 value={form.backup_retention_days}
                 onChange={e => setForm(p => ({ ...p, backup_retention_days: e.target.value }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={inputCls}
               />
             </div>
           </div>
         )}
 
         {/* Manual Backup */}
-        <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
           <button
             type="button"
             onClick={handleManualBackup}
             disabled={downloading}
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <HardDrive className="w-4 h-4" />}
             Backup Manual
           </button>
-          <p className="text-xs text-slate-400">Download backup database sekarang</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Download backup database sekarang</p>
         </div>
       </div>
       <SaveBar saving={saving} msg={msg} />
@@ -533,16 +534,16 @@ function SecurityTab() {
         { key: "confirm_password", label: "Konfirmasi Password Baru", show: showNew, toggle: () => setShowNew(v => !v) },
       ].map(field => (
         <div key={field.key}>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">{field.label}</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{field.label}</label>
           <div className="relative">
             <input
               type={field.show ? "text" : "password"}
               required
               value={(form as Record<string, string>)[field.key]}
               onChange={e => setForm(p => ({ ...p, [field.key]: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={`${inputCls} pr-10`}
             />
-            <button type="button" onClick={field.toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={field.toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
               {field.show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
@@ -550,7 +551,11 @@ function SecurityTab() {
       ))}
 
       {msg && (
-        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-100"}`}>
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${
+          msg.type === "success"
+            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/50"
+            : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800/50"
+        }`}>
           {msg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           {msg.text}
         </div>
@@ -597,12 +602,12 @@ function DangerZone() {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="font-semibold text-red-800 text-sm">Reset Data Operasional</p>
-            <p className="text-xs text-red-600 mt-1">Menghapus SEMUA voucher, reseller, wallet log, dan mereset saldo. Aksi ini tidak dapat dibatalkan.</p>
+            <p className="font-semibold text-red-800 dark:text-red-300 text-sm">Reset Data Operasional</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Menghapus SEMUA voucher, reseller, wallet log, dan mereset saldo. Aksi ini tidak dapat dibatalkan.</p>
           </div>
           <button
             type="button"
@@ -616,7 +621,11 @@ function DangerZone() {
       </div>
 
       {msg && (
-        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-100"}`}>
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${
+          msg.type === "success"
+            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/50"
+            : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800/50"
+        }`}>
           {msg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           {msg.text}
         </div>
@@ -625,27 +634,27 @@ function DangerZone() {
       {/* Confirmation Dialog */}
       {showDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900">Konfirmasi Reset Data</h3>
-                <p className="text-sm text-slate-500">Aksi ini tidak dapat dibatalkan.</p>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100">Konfirmasi Reset Data</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Aksi ini tidak dapat dibatalkan.</p>
               </div>
             </div>
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
               Semua <strong>voucher</strong>, <strong>reseller</strong>, <strong>wallet log</strong>, dan <strong>saldo</strong> akan dihapus. Akun admin akan dipertahankan.
             </p>
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1.5">
-                Ketik <span className="text-red-600 font-mono">RESET</span> untuk konfirmasi
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                Ketik <span className="text-red-600 dark:text-red-400 font-mono">RESET</span> untuk konfirmasi
               </label>
               <input
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono"
+                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 font-mono outline-none transition-colors"
                 placeholder="RESET"
               />
             </div>
@@ -653,7 +662,7 @@ function DangerZone() {
               <button
                 type="button"
                 onClick={() => { setShowDialog(false); setConfirm("") }}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-semibold"
+                className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
               >
                 Batal
               </button>
@@ -678,7 +687,7 @@ function DangerZone() {
 
 function SaveBar({ saving, msg }: { saving: boolean; msg: { type: "success" | "error"; text: string } | null }) {
   return (
-    <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+    <div className="flex items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
       <button
         type="submit"
         disabled={saving}
@@ -688,7 +697,7 @@ function SaveBar({ saving, msg }: { saving: boolean; msg: { type: "success" | "e
         Simpan Pengaturan
       </button>
       {msg && (
-        <span className={`flex items-center gap-1.5 text-sm font-medium ${msg.type === "success" ? "text-green-700" : "text-red-600"}`}>
+        <span className={`flex items-center gap-1.5 text-sm font-medium ${msg.type === "success" ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
           {msg.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {msg.text}
         </span>
@@ -723,10 +732,10 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
               tab.id === "danger"
                 ? activeTab === tab.id
                   ? "bg-red-600 text-white shadow-sm"
-                  : "text-red-600 hover:bg-red-50"
+                  : "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                 : activeTab === tab.id
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
             }`}
           >
             {tab.icon}
@@ -736,45 +745,45 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
       </nav>
 
       {/* Tab Content */}
-      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6">
+      <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6 transition-colors duration-200">
         {activeTab === "profile" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">Informasi Admin</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Informasi Admin</h3>
             <ProfileTab adminUser={adminUser} />
           </div>
         )}
 
         {activeTab === "mikrotik" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">Koneksi MikroTik</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Koneksi MikroTik</h3>
             <MikrotikTab settings={settings} />
           </div>
         )}
 
         {activeTab === "hotspot" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">Pengaturan Hotspot & Branding</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Pengaturan Hotspot & Branding</h3>
             <HotspotTab settings={settings} />
           </div>
         )}
 
         {activeTab === "backup" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">Backup & Restore</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Backup & Restore</h3>
             <BackupTab settings={settings} />
           </div>
         )}
 
         {activeTab === "security" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-slate-900">Ubah Password Admin</h3>
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Ubah Password Admin</h3>
             <SecurityTab />
           </div>
         )}
 
         {activeTab === "danger" && (
           <div className="space-y-4">
-            <h3 className="font-bold text-red-700">Danger Zone — Reset Data</h3>
+            <h3 className="font-bold text-red-700 dark:text-red-400">Danger Zone — Reset Data</h3>
             <DangerZone />
           </div>
         )}

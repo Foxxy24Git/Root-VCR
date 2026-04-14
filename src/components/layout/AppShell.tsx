@@ -11,12 +11,12 @@ interface AppShellProps {
 
 export function AppShell({ children, role, logoUrl, companyName }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
       <Sidebar role={role} logoUrl={logoUrl} companyName={companyName} />
       <Header role={role} />
       {/* pt-14 clears fixed header (h-14); pb-20 lg:pb-0 clears BottomNav on mobile */}
       <main className="lg:ml-[240px] pt-14 pb-20 lg:pb-0 min-h-screen">
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 animate-fade-in">
           {children}
         </div>
       </main>

@@ -515,3 +515,76 @@
     bottom: 2.5rem;
   }
 }
+
+/* ── Dark Mode ───────────────────────────────────────────── */
+.dark .login-page {
+  background: #0f172a;
+}
+
+.dark .login-form-panel {
+  background: #1e293b;
+}
+
+.dark .login-mobile-logo__text {
+  color: #f1f5f9;
+}
+
+.dark .login-mobile-subtitle {
+  color: #94a3b8;
+}
+
+.dark .login-greeting__title {
+  color: #f1f5f9;
+}
+
+.dark .login-greeting__subtitle {
+  color: #94a3b8;
+}
+
+.dark .login-field__label {
+  color: #cbd5e1;
+}
+
+.dark .login-input {
+  background: #334155;
+  color: #f1f5f9;
+  border-color: transparent;
+}
+
+.dark .login-input::placeholder {
+  color: #64748b;
+}
+
+.dark .login-input:focus {
+  background: #1e293b;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.dark .login-error {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+}
+
+.dark .login-password-toggle {
+  color: #64748b;
+}
+
+.dark .login-password-toggle:hover {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.dark .login-remember__text {
+  color: #94a3b8;
+}
+
+.dark .login-remember__checkbox {
+  border-color: #475569;
+  background: #334155;
+}
+
+.dark .login-form-footer {
+  color: #475569;
+}

@@ -83,10 +83,10 @@ export default async function VoucherManagementPage({
     <div className="max-w-7xl mx-auto space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Manajemen Voucher
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Kelola dan pantau semua voucher yang Anda generate.
           </p>
         </div>
@@ -101,9 +101,9 @@ export default async function VoucherManagementPage({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
         {/* Filters Bar */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-3">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 space-y-3">
           <form className="flex flex-col gap-3">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -112,14 +112,14 @@ export default async function VoucherManagementPage({
                 name="search"
                 defaultValue={searchFilter}
                 placeholder="Cari kode voucher..."
-                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
               />
             </div>
             <div className="flex flex-wrap gap-2">
               <select
                 name="status"
                 defaultValue={statusFilter || "all"}
-                className="flex-1 min-w-[120px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="flex-1 min-w-[120px] bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
               >
                 <option value="all">Semua Status</option>
                 <option value="unused">Unused</option>
@@ -129,7 +129,7 @@ export default async function VoucherManagementPage({
               <select
                 name="profileId"
                 defaultValue={profileFilter || "all"}
-                className="flex-1 min-w-[130px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="flex-1 min-w-[130px] bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
               >
                 <option value="all">Semua Profile</option>
                 {resellerProfiles.map((rp) => (
@@ -140,7 +140,7 @@ export default async function VoucherManagementPage({
               </select>
               <button
                 type="submit"
-                className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
+                className="bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0"
               >
                 Filter
               </button>
@@ -153,21 +153,29 @@ export default async function VoucherManagementPage({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 text-sm">
-            <span className="text-slate-500">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/20 text-sm">
+            <span className="text-slate-500 dark:text-slate-400">
               Menampilkan {(page - 1) * limit + 1} -{" "}
               {Math.min(page * limit, total)} dari <b>{total}</b>
             </span>
             <div className="flex gap-1">
               <Link
                 href={`?page=${Math.max(1, page - 1)}&status=${statusFilter || ""}&profileId=${profileFilter || ""}`}
-                className={`px-3 py-1.5 border rounded-md font-medium ${page <= 1 ? "pointer-events-none opacity-50 text-slate-400 border-slate-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 border rounded-md font-medium transition-colors ${
+                  page <= 1
+                    ? "pointer-events-none opacity-50 text-slate-400 border-slate-200 dark:border-slate-700"
+                    : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600"
+                }`}
               >
                 Prev
               </Link>
               <Link
                 href={`?page=${Math.min(totalPages, page + 1)}&status=${statusFilter || ""}&profileId=${profileFilter || ""}`}
-                className={`px-3 py-1.5 border rounded-md font-medium ${page >= totalPages ? "pointer-events-none opacity-50 text-slate-400 border-slate-200" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 border rounded-md font-medium transition-colors ${
+                  page >= totalPages
+                    ? "pointer-events-none opacity-50 text-slate-400 border-slate-200 dark:border-slate-700"
+                    : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600"
+                }`}
               >
                 Next
               </Link>

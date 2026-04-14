@@ -29,10 +29,10 @@ const idrFmt = (v: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(v)
 
 const statusColor: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  unused: "bg-yellow-100 text-yellow-700",
-  expired: "bg-red-100 text-red-700",
-  deleted: "bg-slate-100 text-slate-700",
+  active: "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400",
+  unused: "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400",
+  expired: "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400",
+  deleted: "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300",
 }
 
 const formatDate = (dateStr: string | null) => {
@@ -115,17 +115,17 @@ export function VoucherDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px] p-0 border-0 shadow-2xl max-h-[90dvh] flex flex-col overflow-hidden">
-        <div className="bg-white flex flex-col overflow-hidden min-h-0">
+        <div className="bg-white dark:bg-slate-800 flex flex-col overflow-hidden min-h-0">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900">Detail Voucher</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Detail Voucher</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => setView("details")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                   view === "details"
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
                 }`}
               >
                 <Info className="w-3 h-3" /> Detail
@@ -135,7 +135,7 @@ export function VoucherDetailModal({
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                   view === "card"
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
                 }`}
               >
                 <CreditCard className="w-3 h-3" /> Card
@@ -198,62 +198,62 @@ export function VoucherDetailModal({
           ) : (
             /* Detail View */
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <span className="block text-xs text-slate-400 uppercase tracking-wider mb-2">Kode Voucher</span>
-                <span className="text-2xl font-bold text-slate-900 tracking-widest">{voucher.code}</span>
+              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 text-center">
+                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Kode Voucher</span>
+                <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Profile</span>
-                  <p className="font-semibold text-slate-900">{voucher.profile ?? "-"}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Profile</span>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{voucher.profile ?? "-"}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Status</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</span>
                   <p>
-                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColor[voucher.status] ?? "bg-slate-100 text-slate-700"}`}>
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColor[voucher.status] ?? "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"}`}>
                       {voucher.status.toUpperCase()}
                     </span>
                   </p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Reseller</span>
-                  <p className="font-medium text-slate-700">{voucher.user_name ?? "-"}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Reseller</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300">{voucher.user_name ?? "-"}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Harga</span>
-                  <p className="font-semibold text-slate-900">{idrFmt(voucher.price_charged)}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Harga</span>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{idrFmt(voucher.price_charged)}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Generated At</span>
-                  <p className="font-medium text-slate-700 text-xs">{formatDate(voucher.generated_at)}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Generated At</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300 text-xs">{formatDate(voucher.generated_at)}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Used At</span>
-                  <p className="font-medium text-slate-700 text-xs">{formatDate(voucher.used_at)}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Used At</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300 text-xs">{formatDate(voucher.used_at)}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Expired At</span>
-                  <p className="font-medium text-slate-700 text-xs">{formatDate(voucher.expired_at)}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Expired At</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300 text-xs">{formatDate(voucher.expired_at)}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Client IP</span>
-                  <p className="font-medium text-slate-700 font-mono text-xs">{voucher.client_ip ?? "-"}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Client IP</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300 font-mono text-xs">{voucher.client_ip ?? "-"}</p>
                 </div>
                 <div className="col-span-2 space-y-0.5">
-                  <span className="text-xs text-slate-400 uppercase tracking-wider">Client MAC</span>
-                  <p className="font-medium text-slate-700 font-mono text-sm">{voucher.client_mac ?? "-"}</p>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">Client MAC</span>
+                  <p className="font-medium text-slate-700 dark:text-slate-300 font-mono text-sm">{voucher.client_mac ?? "-"}</p>
                 </div>
               </div>
 
               {/* MikroTik Actions */}
-              <div className="border-t border-slate-100 pt-3">
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Aksi MikroTik</p>
+              <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
+                <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Aksi MikroTik</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => doAction("cookie")}
                     disabled={!!actionLoading}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold transition-colors disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-700 dark:text-orange-400 text-xs font-semibold transition-colors disabled:opacity-50"
                   >
                     {actionLoading === "cookie" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Cookie className="w-3.5 h-3.5" />}
                     Hapus Cookie
@@ -261,14 +261,14 @@ export function VoucherDetailModal({
                   <button
                     onClick={() => doAction("logout")}
                     disabled={!!actionLoading}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition-colors disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 text-xs font-semibold transition-colors disabled:opacity-50"
                   >
                     {actionLoading === "logout" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
                     Logout Sesi
                   </button>
                 </div>
                 {actionMsg && (
-                  <p className={`text-xs mt-2 px-3 py-1.5 rounded-lg ${actionMsg.type === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                  <p className={`text-xs mt-2 px-3 py-1.5 rounded-lg ${actionMsg.type === "ok" ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"}`}>
                     {actionMsg.text}
                   </p>
                 )}
@@ -283,8 +283,8 @@ export function VoucherDetailModal({
                 onClick={handleCopy}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
                   copied
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50"
+                    : "bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200"
                 }`}
               >
                 <Copy className="w-4 h-4" />
@@ -292,7 +292,7 @@ export function VoucherDetailModal({
               </button>
               <button
                 onClick={() => onOpenChange(false)}
-                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-semibold text-sm transition-colors"
               >
                 Tutup
               </button>
@@ -301,14 +301,14 @@ export function VoucherDetailModal({
             <div className="flex gap-2">
               <button
                 onClick={() => handleShare("wa")}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-semibold transition-colors"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 WhatsApp
               </button>
               <button
                 onClick={() => handleShare("tg")}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 text-xs font-semibold transition-colors"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 Telegram

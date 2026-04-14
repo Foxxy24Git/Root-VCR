@@ -36,10 +36,10 @@ export default async function AdminWalletPage() {
     }))
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0 animate-slide-up">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dana & Wallet</h1>
-        <p className="text-slate-500 mt-1">Kelola saldo dan riwayat deposit semua reseller.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Dana & Wallet</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Kelola saldo dan riwayat deposit semua reseller.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -47,24 +47,24 @@ export default async function AdminWalletPage() {
           title="Total Saldo Beredar"
           value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.balance || 0))}
           icon={WalletIcon}
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
         />
         <StatsCard
           title="Total Top Up (Masuk)"
           value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.total_topup || 0))}
           icon={ArrowDownRight}
-          iconClassName="bg-green-50 text-green-600"
+          iconClassName="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
         />
         <StatsCard
           title="Total Pemakaian (Keluar)"
           value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.total_spent || 0))}
           icon={ArrowUpRight}
-          iconClassName="bg-red-50 text-red-600"
+          iconClassName="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
         />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-slate-900">Daftar Akun & Saldo</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Daftar Akun & Saldo</h2>
         <AdminWalletTable resellers={mappedResellers} />
       </div>
     </div>

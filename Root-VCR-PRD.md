@@ -104,11 +104,10 @@ Root.VCR adalah aplikasi manajemen voucher untuk usaha RT/RW Net yang terintegra
 
 ```javascript
 // Environment Variables (.env)
-MIKROTIK_HOST=id-11.tunnel.web.id
-MIKROTIK_PORT=6904
-MIKROTIK_API_PORT=8728
-MIKROTIK_USER=admin
-MIKROTIK_PASSWORD=K@nd@ngkud0
+MIKROTIK_HOST=id-05.tunnel.web.id
+MIKROTIK_PORT=9577
+MIKROTIK_USER=api-user
+MIKROTIK_PASSWORD=hell2112
 ```
 
 ---

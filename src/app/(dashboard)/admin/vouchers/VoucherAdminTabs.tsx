@@ -137,21 +137,21 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             Sync MikroTik
           </button>
         </div>
         {syncMsg && (
-          <p className="text-sm text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">{syncMsg}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/30 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600">{syncMsg}</p>
         )}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Nama Profile</th>
                 <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-xs">Durasi</th>
@@ -171,10 +171,10 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                 </tr>
               ) : (
                 initialProfiles.map(p => (
-                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-900">{p.name}</p>
-                      <p className="text-xs text-slate-400">{p.mikrotik_profile}</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{p.mikrotik_profile}</p>
                     </td>
                     <td className="px-6 py-4 text-center text-slate-700">
                       {p.duration_days > 0 ? `${p.duration_days}h ` : ""}
@@ -336,8 +336,8 @@ function AllVouchers({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-3">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 space-y-3">
           <form className="flex flex-col gap-3" method="GET">
             <input type="hidden" name="tab" value="vouchers" />
             <div className="relative w-full">
@@ -347,18 +347,18 @@ function AllVouchers({
                 name="search"
                 defaultValue={searchFilter}
                 placeholder="Cari kode atau reseller..."
-                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              <select name="status" defaultValue={statusFilter || "all"} className="flex-1 min-w-[130px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer">
+              <select name="status" defaultValue={statusFilter || "all"} className="flex-1 min-w-[130px] bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm cursor-pointer">
                 <option value="all">Semua Status</option>
                 <option value="unused">Unused</option>
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
                 <option value="deleted">Deleted</option>
               </select>
-              <select name="profileId" defaultValue={profileFilter || "all"} className="flex-1 min-w-[130px] bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm cursor-pointer">
+              <select name="profileId" defaultValue={profileFilter || "all"} className="flex-1 min-w-[130px] bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm cursor-pointer">
                 <option value="all">Semua Profile</option>
                 {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -368,7 +368,7 @@ function AllVouchers({
                   type="button"
                   onClick={() => handleExport("pdf")}
                   disabled={exporting === "pdf"}
-                  className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
                 >
                   {exporting === "pdf" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
                   <span className="hidden sm:inline">PDF</span>
@@ -390,7 +390,7 @@ function AllVouchers({
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-white border-b border-slate-100 text-slate-500">
+            <thead className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Kode Voucher</th>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Reseller</th>
@@ -412,13 +412,13 @@ function AllVouchers({
                 vouchers.map(v => (
                   <tr
                     key={v.id}
-                    className="hover:bg-blue-50/30 cursor-pointer transition-colors"
+                    className="hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer transition-colors"
                     onClick={() => openDetail(v)}
                   >
-                    <td className="px-6 py-4 font-bold text-slate-900 tracking-wider">{v.code}</td>
-                    <td className="px-6 py-4 text-slate-600">{v.user_name ?? "-"}</td>
-                    <td className="px-6 py-4 font-medium text-blue-600">{v.profile_name ?? "-"}</td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100 tracking-wider">{v.code}</td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{v.user_name ?? "-"}</td>
+                    <td className="px-6 py-4 font-medium text-blue-600 dark:text-blue-400">{v.profile_name ?? "-"}</td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {new Date(v.generated_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -466,17 +466,17 @@ function AllVouchers({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 text-sm">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/20 text-sm">
             <span className="text-slate-500">
               Hal. {currentPage} dari {totalPages} ({totalVouchers} total)
             </span>
             <div className="flex gap-1">
               <Link href={buildHref({ page: String(Math.max(1, currentPage - 1)) })}
-                className={`px-3 py-1.5 border rounded-md font-medium ${currentPage <= 1 ? "pointer-events-none opacity-50 border-slate-200 text-slate-400" : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"}`}>
+                className={`px-3 py-1.5 border rounded-md font-medium ${currentPage <= 1 ? "pointer-events-none opacity-50 border-slate-200 dark:border-slate-700 text-slate-400" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200"}`}>
                 Prev
               </Link>
               <Link href={buildHref({ page: String(Math.min(totalPages, currentPage + 1)) })}
-                className={`px-3 py-1.5 border rounded-md font-medium ${currentPage >= totalPages ? "pointer-events-none opacity-50 border-slate-200 text-slate-400" : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"}`}>
+                className={`px-3 py-1.5 border rounded-md font-medium ${currentPage >= totalPages ? "pointer-events-none opacity-50 border-slate-200 dark:border-slate-700 text-slate-400" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200"}`}>
                 Next
               </Link>
             </div>
@@ -534,7 +534,7 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
         {pppoeUsers.length === 0 ? (
           <div className="py-12 text-center text-slate-500 px-4">
             <Wifi className="w-8 h-8 mx-auto text-slate-300 mb-3" />
@@ -546,7 +546,7 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
             {/* Desktop table */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
+                <thead className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Username</th>
                     <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Profile</th>
@@ -554,7 +554,7 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
                     <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Last Seen</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {pppoeUsers.map(u => (
                     <tr key={u.id} className="hover:bg-slate-50/50">
                       <td className="px-6 py-4 font-semibold text-slate-900">{u.username}</td>
@@ -622,15 +622,15 @@ export function VoucherAdminTabs({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
+      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none justify-center sm:justify-start ${
               activeTab === tab.id
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
             {tab.icon}

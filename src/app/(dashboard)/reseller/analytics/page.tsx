@@ -141,10 +141,10 @@ export default async function AnalyticsPage({
   const topProfile = popularProfileData[0]?.name ?? "-"
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0 animate-slide-up">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Analytics</h1>
-        <p className="text-slate-500 mt-1">Pantau statistik penjualan dan penggunaan saldo Anda.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Analytics</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Pantau statistik penjualan dan penggunaan saldo Anda.</p>
       </div>
 
       <AnalyticsCharts

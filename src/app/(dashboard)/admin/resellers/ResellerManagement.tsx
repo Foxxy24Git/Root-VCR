@@ -144,7 +144,7 @@ function EditResellerDialog({
         </DialogHeader>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm border border-red-100 dark:border-red-800/50">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
@@ -187,41 +187,41 @@ function EditResellerDialog({
 
           {/* Name */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">Nama Lengkap</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nama Lengkap</label>
             <input
               required
               value={formData.name}
               onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">Email</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">Email</label>
             <input
               type="email"
               required
               value={formData.email}
               onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             />
           </div>
 
           {/* Phone */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">No. WhatsApp</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">No. WhatsApp</label>
             <input
               value={formData.phone}
               onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
               placeholder="08123456789"
             />
           </div>
 
           {/* Fee */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">Fee Percentage (%)</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">Fee Percentage (%)</label>
             <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20">
               <input
                 type="number"
@@ -238,7 +238,7 @@ function EditResellerDialog({
 
           {/* Password */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">
               Password Baru <span className="text-slate-400 font-normal">(kosongkan jika tidak diubah)</span>
             </label>
             <div className="relative">
@@ -366,7 +366,7 @@ function AssignProfilesDialog({
         </DialogHeader>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm border border-red-100 dark:border-red-800/50">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
@@ -381,7 +381,7 @@ function AssignProfilesDialog({
               {profiles.map((p) => (
                 <label
                   key={p.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -390,8 +390,8 @@ function AssignProfilesDialog({
                     className="w-4 h-4 accent-blue-600"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{p.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{p.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Rp {p.price.toLocaleString("id-ID")}
                     </p>
                   </div>
@@ -473,7 +473,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-up">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto flex-1">
@@ -484,13 +484,13 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari nama atau email..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            className="bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
           >
             <option value="all">Semua Status</option>
             <option value="active">Aktif</option>
@@ -507,10 +507,10 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
       </div>
 
       {/* Desktop Table */}
-      <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Reseller</th>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Fee</th>
@@ -520,7 +520,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                 <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider text-xs">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-14 text-center text-slate-500">
@@ -531,7 +531,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                 </tr>
               ) : (
                 filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={r.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {r.avatar_url ? (
@@ -548,17 +548,17 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold text-slate-900">{r.name}</p>
-                          <p className="text-xs text-slate-500">{r.email}</p>
-                          {r.phone && <p className="text-xs text-slate-400">{r.phone}</p>}
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">{r.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{r.email}</p>
+                          {r.phone && <p className="text-xs text-slate-400 dark:text-slate-500">{r.phone}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-semibold text-slate-700">{r.fee_percentage}%</td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-900">
+                    <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">{r.fee_percentage}%</td>
+                    <td className="px-6 py-4 text-right font-bold text-slate-900 dark:text-slate-100">
                       Rp {r.balance.toLocaleString("id-ID")}
                     </td>
-                    <td className="px-6 py-4 text-right text-slate-700">
+                    <td className="px-6 py-4 text-right text-slate-700 dark:text-slate-300">
                       Rp {r.total_spent.toLocaleString("id-ID")}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -628,7 +628,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
         </div>
 
         {/* Mobile Cards */}
-        <div className="md:hidden divide-y divide-slate-100">
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700">
           {filtered.length === 0 ? (
             <div className="py-12 text-center text-slate-500 px-4">
               <Search className="w-8 h-8 mx-auto text-slate-300 mb-3" />
@@ -654,7 +654,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                     )}
                     <div>
                       <p className="font-semibold text-slate-900">{r.name}</p>
-                      <p className="text-xs text-slate-500">{r.email}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{r.email}</p>
                     </div>
                   </div>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -664,17 +664,17 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs mb-3">
-                  <div className="bg-slate-50 rounded-lg p-2">
-                    <p className="text-slate-400 mb-0.5">Fee</p>
-                    <p className="font-bold text-slate-900">{r.fee_percentage}%</p>
+                  <div className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2">
+                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Fee</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{r.fee_percentage}%</p>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-2">
-                    <p className="text-slate-400 mb-0.5">Saldo</p>
-                    <p className="font-bold text-slate-900">Rp {r.balance.toLocaleString("id-ID")}</p>
+                  <div className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2">
+                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Saldo</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">Rp {r.balance.toLocaleString("id-ID")}</p>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-2">
-                    <p className="text-slate-400 mb-0.5">Omset</p>
-                    <p className="font-bold text-slate-900">Rp {r.total_spent.toLocaleString("id-ID")}</p>
+                  <div className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2">
+                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Omset</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">Rp {r.total_spent.toLocaleString("id-ID")}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">

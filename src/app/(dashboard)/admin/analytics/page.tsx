@@ -108,8 +108,8 @@ export default async function AdminAnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Analytics</h1>
-        <p className="text-slate-500 mt-1">Performa sistem secara keseluruhan.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Analytics</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Performa sistem secara keseluruhan.</p>
       </div>
 
       {/* Stats Row */}
@@ -119,38 +119,38 @@ export default async function AdminAnalyticsPage() {
             label: "Voucher Hari Ini",
             value: vouchersToday.toLocaleString("id-ID"),
             sub: "voucher digenerate",
-            icon: <Ticket className="w-5 h-5 text-blue-600" />,
-            bg: "bg-blue-50",
+            icon: <Ticket className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
+            bg: "bg-blue-50 dark:bg-blue-900/30",
           },
           {
             label: "Revenue (Bulan Ini)",
             value: `Rp ${(Number(revenueMTD._sum.price_charged) || 0).toLocaleString("id-ID")}`,
             sub: "total bulan ini",
-            icon: <DollarSign className="w-5 h-5 text-green-600" />,
-            bg: "bg-green-50",
+            icon: <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />,
+            bg: "bg-green-50 dark:bg-green-900/30",
           },
           {
             label: "Reseller Aktif",
             value: activeResellers.toLocaleString("id-ID"),
             sub: `dari ${totalResellers} total`,
-            icon: <Users className="w-5 h-5 text-indigo-600" />,
-            bg: "bg-indigo-50",
+            icon: <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
+            bg: "bg-indigo-50 dark:bg-indigo-900/30",
           },
           {
             label: "Revenue (7 Hari)",
             value: `Rp ${totalRevenue7Days.toLocaleString("id-ID")}`,
             sub: `${totalVouchers7Days} voucher`,
-            icon: <TrendingUp className="w-5 h-5 text-amber-600" />,
-            bg: "bg-amber-50",
+            icon: <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+            bg: "bg-amber-50 dark:bg-amber-900/30",
           },
         ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 hover:-translate-y-0.5 hover:shadow-md transition-all">
+          <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 hover:-translate-y-0.5 hover:shadow-md transition-all">
             <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center mb-4`}>
               {stat.icon}
             </div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{stat.sub}</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{stat.value}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{stat.sub}</p>
           </div>
         ))}
       </div>

@@ -91,7 +91,7 @@ export function ResellerProfileForm({ user }: { user: ResellerUser }) {
               alt="Avatar"
               width={80}
               height={80}
-              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg"
+              className="w-20 h-20 rounded-full object-cover border-2 border-white dark:border-slate-700 shadow-lg"
             />
           ) : (
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
@@ -114,46 +114,46 @@ export function ResellerProfileForm({ user }: { user: ResellerUser }) {
           />
         </div>
         <div>
-          <p className="font-semibold text-slate-900">{user.name}</p>
-          <p className="text-sm text-slate-500">{user.email}</p>
-          <p className="text-xs text-slate-400 mt-1">Klik ikon kamera untuk ganti foto. Max 2MB.</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">{user.name}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Klik ikon kamera untuk ganti foto. Max 2MB.</p>
         </div>
       </div>
 
       {/* Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
             Nama Lengkap
           </label>
-          <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-500">
-            <User className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400">
+            <User className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
             {user.name}
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
             Email
           </label>
-          <div className="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-500">
+          <div className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400">
             {user.email}
           </div>
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">No. Telepon</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">No. Telepon</label>
           <input
             value={form.phone}
             onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-colors"
             placeholder="+62 812 3456 7890"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Lokasi / Alamat</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Lokasi / Alamat</label>
           <input
             value={form.location}
             onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-colors"
             placeholder="Jakarta, Indonesia"
           />
         </div>
@@ -162,8 +162,8 @@ export function ResellerProfileForm({ user }: { user: ResellerUser }) {
       {msg && (
         <div className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${
           msg.type === "success"
-            ? "bg-green-50 text-green-700 border-green-200"
-            : "bg-red-50 text-red-600 border-red-100"
+            ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/50"
+            : "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800/50"
         }`}>
           {msg.type === "success"
             ? <CheckCircle2 className="w-4 h-4 shrink-0" />
