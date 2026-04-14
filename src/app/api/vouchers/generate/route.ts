@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   const getSetting = (key: string, def: string) =>
     settings.find((s) => s.key === key)?.value ?? def
 
-  const prefix   = getSetting("voucher_prefix", "VCR-")
+  const prefix   = ""
   const codeLen  = parseInt(getSetting("voucher_code_length", "8"))
   const format   = getSetting("voucher_code_format", "alphanumeric_upper") as
     "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric" | "alpha"
