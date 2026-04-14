@@ -105,17 +105,17 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
         )}
 
         {/* Core Formatting */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden transition-colors duration-200">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-blue-600" />
-            <h2 className="font-semibold text-slate-900 text-sm">Core Formatting</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Core Formatting</h2>
           </div>
           <div className="p-5 space-y-6">
 
             {/* Prefix */}
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-                Code Prefix <span className="text-slate-400 font-normal normal-case">(maks 5 karakter, alfanumerik)</span>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Code Prefix <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(maks 5 karakter, alfanumerik)</span>
               </label>
               <div className="relative">
                 <input
@@ -124,9 +124,9 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                   onChange={(e) => handlePrefixChange(e.target.value)}
                   maxLength={5}
                   placeholder="Contoh: VCR"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-mono font-semibold tracking-widest uppercase text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-mono font-semibold tracking-widest uppercase text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">
                   {prefix.length}/5
                 </span>
               </div>
@@ -135,10 +135,10 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
             {/* Code Length Slider */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Code Length
                 </label>
-                <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
+                <span className="text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 px-2.5 py-0.5 rounded-full">
                   {codeLength} karakter
                 </span>
               </div>
@@ -149,17 +149,17 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                 step={1}
                 value={codeLength}
                 onChange={(e) => setCodeLength(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-full appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between mt-1">
-                <span className="text-xs text-slate-400">6</span>
-                <span className="text-xs text-slate-400">12</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">6</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">12</span>
               </div>
             </div>
 
             {/* Format Radio */}
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-3">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-3">
                 Character Format
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -169,8 +169,8 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                     className={cn(
                       "flex flex-col gap-1 p-3 rounded-xl border-2 cursor-pointer transition-all",
                       format === opt.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 hover:border-slate-300 bg-slate-50"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 bg-slate-50 dark:bg-slate-700/50"
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -184,12 +184,12 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                       />
                       <span className={cn(
                         "text-sm font-semibold",
-                        format === opt.value ? "text-blue-700" : "text-slate-700"
+                        format === opt.value ? "text-blue-700 dark:text-blue-400" : "text-slate-700 dark:text-slate-300"
                       )}>
                         {opt.label}
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-slate-500 pl-5">{opt.example}</span>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400 pl-5">{opt.example}</span>
                   </label>
                 ))}
               </div>
@@ -198,11 +198,11 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
         </div>
 
         {/* Username = Password Toggle */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.07)] p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.07)] p-5 transition-colors duration-200">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-slate-900 text-sm">Username = Password</p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Username = Password</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Gunakan kode voucher yang sama sebagai username dan password hotspot
               </p>
             </div>
@@ -239,10 +239,10 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
 
       {/* ── Right: Live Preview ──────────────────────────────────── */}
       <div className="lg:col-span-2">
-        <div className="sticky top-6 bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h2 className="font-semibold text-slate-900 text-sm">Live Preview</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Contoh kode voucher berdasarkan konfigurasi</p>
+        <div className="sticky top-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden transition-colors duration-200">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Live Preview</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Contoh kode voucher berdasarkan konfigurasi</p>
           </div>
           <div className="p-6 space-y-5">
             {/* Preview Code Display */}
@@ -257,29 +257,29 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
 
             {/* Config Summary */}
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-xs text-slate-500 font-medium">Prefix</span>
-                <span className="text-xs font-semibold text-slate-900 font-mono">
-                  {prefix || <span className="text-slate-400 font-normal">—</span>}
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Prefix</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {prefix || <span className="text-slate-400 dark:text-slate-500 font-normal">—</span>}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-xs text-slate-500 font-medium">Panjang Kode</span>
-                <span className="text-xs font-semibold text-slate-900">{codeLength} karakter</span>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Panjang Kode</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{codeLength} karakter</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-xs text-slate-500 font-medium">Format</span>
-                <span className="text-xs font-semibold text-slate-900">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Format</span>
+                <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {formatOptions.find((f) => f.value === format)?.label}
                 </span>
               </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-xs text-slate-500 font-medium">Username = Password</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Username = Password</span>
                 <span className={cn(
                   "text-xs font-semibold px-2 py-0.5 rounded-full",
                   usernameEqualsPassword
-                    ? "bg-green-100 text-green-700"
-                    : "bg-slate-100 text-slate-600"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
                 )}>
                   {usernameEqualsPassword ? "Aktif" : "Nonaktif"}
                 </span>
@@ -290,7 +290,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
             <button
               type="button"
               onClick={refreshPreview}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Generate Ulang Preview

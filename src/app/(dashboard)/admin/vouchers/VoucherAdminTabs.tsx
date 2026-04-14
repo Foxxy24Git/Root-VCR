@@ -161,12 +161,12 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                 <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider text-xs">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {initialProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                    <Zap className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-                    <p className="font-medium text-slate-900">Belum ada profile</p>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                    <Zap className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="font-medium text-slate-900 dark:text-slate-100">Belum ada profile</p>
                   </td>
                 </tr>
               ) : (
@@ -176,23 +176,23 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">{p.mikrotik_profile}</p>
                     </td>
-                    <td className="px-6 py-4 text-center text-slate-700">
+                    <td className="px-6 py-4 text-center text-slate-700 dark:text-slate-300">
                       {p.duration_days > 0 ? `${p.duration_days}h ` : ""}
                       {p.duration_hours > 0 ? `${p.duration_hours}j` : ""}
                       {p.duration_days === 0 && p.duration_hours === 0 ? "-" : ""}
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-900">
+                    <td className="px-6 py-4 text-right font-bold text-slate-900 dark:text-slate-100">
                       Rp {p.price.toLocaleString("id-ID")}
                     </td>
-                    <td className="px-6 py-4 text-center text-slate-600">{p.speed_limit || "-"}</td>
+                    <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-400">{p.speed_limit || "-"}</td>
                     <td className="px-6 py-4 text-center">
                       <button onClick={() => handleToggleActive(p)} className="inline-flex items-center gap-1.5">
                         {p.is_active ? (
-                          <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                          <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                             <CheckCircle2 className="w-3 h-3" />Aktif
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
+                          <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                             <XCircle className="w-3 h-3" />Nonaktif
                           </span>
                         )}
@@ -220,26 +220,26 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
         </div>
 
         {/* Mobile cards */}
-        <div className="sm:hidden divide-y divide-slate-100">
+        <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
           {initialProfiles.map(p => (
             <div key={p.id} className="p-4">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="font-semibold text-slate-900">{p.name}</p>
-                  <p className="text-xs text-slate-400">{p.mikrotik_profile} • {p.speed_limit || "no limit"}</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{p.mikrotik_profile} • {p.speed_limit || "no limit"}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${p.is_active ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${p.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}>
                   {p.is_active ? "Aktif" : "Nonaktif"}
                 </span>
               </div>
               <div className="flex justify-between items-center mt-3">
                 <div className="text-sm">
-                  <span className="font-bold text-slate-900">Rp {p.price.toLocaleString("id-ID")}</span>
-                  <span className="text-slate-400 text-xs ml-2">{p.duration_days}h {p.duration_hours}j</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">Rp {p.price.toLocaleString("id-ID")}</span>
+                  <span className="text-slate-400 dark:text-slate-500 text-xs ml-2">{p.duration_days}h {p.duration_hours}j</span>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit(p)} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => handleDelete(p.id, p.name)} className="p-1.5 bg-red-50 text-red-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => openEdit(p)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => handleDelete(p.id, p.name)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </div>
@@ -400,12 +400,12 @@ function AllVouchers({
                 <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider text-xs">Harga</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {vouchers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-slate-500">
-                    <Filter className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-                    <p className="font-medium text-slate-900">Tidak ada voucher</p>
+                  <td colSpan={6} className="px-6 py-14 text-center text-slate-500 dark:text-slate-400">
+                    <Filter className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="font-medium text-slate-900 dark:text-slate-100">Tidak ada voucher</p>
                   </td>
                 </tr>
               ) : (
@@ -423,15 +423,15 @@ function AllVouchers({
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        v.status === "active" ? "bg-green-100 text-green-700" :
-                        v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
-                        v.status === "expired" ? "bg-red-100 text-red-700" :
-                        "bg-slate-100 text-slate-500"
+                        v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                        v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                        v.status === "expired" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                        "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                       }`}>
                         {v.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-medium text-slate-900">
+                    <td className="px-6 py-4 text-right font-medium text-slate-900 dark:text-slate-100">
                       Rp {v.price_charged.toLocaleString("id-ID")}
                     </td>
                   </tr>
@@ -442,23 +442,23 @@ function AllVouchers({
         </div>
 
         {/* Mobile */}
-        <div className="md:hidden divide-y divide-slate-100">
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700">
           {vouchers.map(v => (
-            <div key={v.id} className="p-4 cursor-pointer hover:bg-blue-50/30" onClick={() => openDetail(v)}>
+            <div key={v.id} className="p-4 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10" onClick={() => openDetail(v)}>
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span className="font-bold text-slate-900 tracking-wider">{v.code}</span>
-                  <p className="text-xs text-blue-600">{v.profile_name ?? "-"} • {v.user_name ?? "-"}</p>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 tracking-wider">{v.code}</span>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">{v.profile_name ?? "-"} • {v.user_name ?? "-"}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  v.status === "active" ? "bg-green-100 text-green-700" :
-                  v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
-                  "bg-red-100 text-red-700"
+                  v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                  v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                  "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                 }`}>{v.status.toUpperCase()}</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-500 mt-2">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
                 <span>{new Date(v.generated_at).toLocaleDateString("id-ID")}</span>
-                <span className="font-semibold text-slate-900">Rp {v.price_charged.toLocaleString("id-ID")}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">Rp {v.price_charged.toLocaleString("id-ID")}</span>
               </div>
             </div>
           ))}
@@ -520,13 +520,13 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">Data user PPPoE dari MikroTik.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Data user PPPoE dari MikroTik.</p>
         <div className="flex items-center gap-3">
-          {syncMsg && <p className="text-sm text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">{syncMsg}</p>}
+          {syncMsg && <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/30 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600">{syncMsg}</p>}
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0"
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             Sync PPPoE
@@ -536,9 +536,9 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
         {pppoeUsers.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 px-4">
-            <Wifi className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-            <p className="font-medium text-slate-900">Belum ada data PPPoE</p>
+          <div className="py-12 text-center text-slate-500 dark:text-slate-400 px-4">
+            <Wifi className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="font-medium text-slate-900 dark:text-slate-100">Belum ada data PPPoE</p>
             <p className="text-sm mt-1">Klik Sync PPPoE untuk mengambil data dari MikroTik.</p>
           </div>
         ) : (
@@ -556,18 +556,18 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {pppoeUsers.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-50/50">
-                      <td className="px-6 py-4 font-semibold text-slate-900">{u.username}</td>
-                      <td className="px-6 py-4 text-slate-600">{u.profile ?? "-"}</td>
+                    <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">{u.username}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{u.profile ?? "-"}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          u.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                          u.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                         }`}>
                           {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                           {u.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500 text-xs">
+                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
                         {u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "-"}
                       </td>
                     </tr>
@@ -576,20 +576,20 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
               </table>
             </div>
             {/* Mobile cards */}
-            <div className="sm:hidden divide-y divide-slate-100">
+            <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
               {pppoeUsers.map(u => (
                 <div key={u.id} className="p-4">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="font-semibold text-slate-900">{u.username}</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{u.username}</p>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      u.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+                      u.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                     }`}>
                       {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                       {u.status}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">{u.profile ?? "-"}</p>
-                  <p className="text-xs text-slate-400 mt-1">{u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "Belum terlihat"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{u.profile ?? "-"}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "Belum terlihat"}</p>
                 </div>
               ))}
             </div>

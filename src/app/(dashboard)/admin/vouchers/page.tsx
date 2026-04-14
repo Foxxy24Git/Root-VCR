@@ -89,8 +89,8 @@ export default async function AdminVouchersPage({
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Voucher Management</h1>
-        <p className="text-slate-500 mt-1">Kelola profile voucher, lihat semua voucher, dan PPPoE.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Voucher Management</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Kelola profile voucher, lihat semua voucher, dan PPPoE.</p>
       </div>
 
       <VoucherAdminTabs

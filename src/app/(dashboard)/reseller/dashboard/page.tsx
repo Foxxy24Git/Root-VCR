@@ -155,9 +155,9 @@ export default async function ResellerDashboard() {
                           <td className="px-5 py-3">{v.profile?.name ?? "-"}</td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                              v.status === "active" ? "bg-green-100 text-green-700" :
-                              v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
-                              v.status === "expired" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
+                              v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                              v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                              v.status === "expired" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
                             }`}>{v.status.toUpperCase()}</span>
                           </td>
                           <td className="px-5 py-3 text-right">Rp {Number(v.price_charged).toLocaleString("id-ID")}</td>
@@ -177,11 +177,11 @@ export default async function ResellerDashboard() {
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold mb-1 ${
-                          v.status === "active" ? "bg-green-100 text-green-700" :
-                          v.status === "unused" ? "bg-yellow-100 text-yellow-700" :
-                          "bg-red-100 text-red-700"
+                          v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                          v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                          "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                         }`}>{v.status.toUpperCase()}</span>
-                        <p className="text-xs font-bold text-slate-900">Rp {Number(v.price_charged).toLocaleString("id-ID")}</p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Rp {Number(v.price_charged).toLocaleString("id-ID")}</p>
                       </div>
                     </div>
                   ))}

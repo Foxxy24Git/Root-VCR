@@ -167,7 +167,7 @@ function EditResellerDialog({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
               >
                 <Camera className="w-3.5 h-3.5 text-slate-600" />
               </button>
@@ -222,7 +222,7 @@ function EditResellerDialog({
           {/* Fee */}
           <div>
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1">Fee Percentage (%)</label>
-            <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20">
+            <div className="flex bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20">
               <input
                 type="number"
                 min={0}
@@ -230,9 +230,9 @@ function EditResellerDialog({
                 required
                 value={formData.fee_percentage}
                 onChange={(e) => setFormData((p) => ({ ...p, fee_percentage: Number(e.target.value) }))}
-                className="w-full bg-transparent px-3 py-2 text-sm focus:outline-none"
+                className="w-full bg-transparent px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none"
               />
-              <span className="flex items-center px-3 bg-slate-100 text-slate-500 font-medium border-l border-slate-200">%</span>
+              <span className="flex items-center px-3 bg-slate-100 dark:bg-slate-600 text-slate-500 dark:text-slate-400 font-medium border-l border-slate-200 dark:border-slate-500">%</span>
             </div>
           </div>
 
@@ -246,7 +246,7 @@ function EditResellerDialog({
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 placeholder="Minimal 6 karakter"
               />
               <button
@@ -523,9 +523,9 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-slate-500">
-                    <Search className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-                    <p className="font-medium text-slate-900">Tidak ada reseller</p>
+                  <td colSpan={6} className="px-6 py-14 text-center text-slate-500 dark:text-slate-400">
+                    <Search className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="font-medium text-slate-900 dark:text-slate-100">Tidak ada reseller</p>
                     <p className="text-sm mt-1">Coba ubah filter atau tambah reseller baru.</p>
                   </td>
                 </tr>
@@ -564,10 +564,10 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                         r.is_frozen
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                           : r.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       }`}>
                         {r.is_frozen ? (
                           <><Snowflake className="w-3 h-3" />Frozen</>
@@ -630,9 +630,9 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
         {/* Mobile Cards */}
         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 px-4">
-              <Search className="w-8 h-8 mx-auto text-slate-300 mb-3" />
-              <p className="font-medium text-slate-900">Tidak ada reseller</p>
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400 px-4">
+              <Search className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+              <p className="font-medium text-slate-900 dark:text-slate-100">Tidak ada reseller</p>
             </div>
           ) : (
             filtered.map((r) => (
@@ -653,12 +653,12 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-slate-900">{r.name}</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{r.name}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{r.email}</p>
                     </div>
                   </div>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    r.is_frozen ? "bg-blue-100 text-blue-700" : r.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    r.is_frozen ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : r.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   }`}>
                     {r.is_frozen ? "Frozen" : r.is_active ? "Aktif" : "Nonaktif"}
                   </span>
@@ -681,26 +681,26 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                   <button
                     onClick={() => { setSelectedReseller(r); setTopupOpen(true) }}
                     disabled={r.is_frozen}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50 rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Wallet className="w-3.5 h-3.5" /> Top Up
                   </button>
                   <button
                     onClick={() => { setSelectedReseller(r); setAssignOpen(true) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50 rounded-lg text-xs font-semibold"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" /> Profil
                   </button>
                   <button
                     onClick={() => { setSelectedReseller(r); setEditOpen(true) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-semibold"
                   >
                     <Pencil className="w-3.5 h-3.5" /> Edit
                   </button>
                   <button
                     onClick={() => handleFreezeToggle(r)}
                     disabled={freezeLoading === r.id}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 rounded-lg text-xs font-semibold disabled:opacity-50"
                   >
                     {freezeLoading === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Snowflake className="w-3.5 h-3.5" />}
                     {r.is_frozen ? "Unfreeze" : "Freeze"}
