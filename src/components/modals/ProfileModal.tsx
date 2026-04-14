@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Loader2, Zap } from "lucide-react"
+import { Loader2, Zap, RefreshCw, CheckCircle2 } from "lucide-react"
 
 export interface ProfileInput {
   id?: string
@@ -15,6 +15,14 @@ export interface ProfileInput {
   mikrotik_profile: string
 }
 
+interface MikrotikProfile {
+  name: string
+  speed_limit: string | null
+  duration_days: number
+  duration_hours: number
+  session_timeout: string | null
+}
+
 interface ProfileModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -22,39 +30,71 @@ interface ProfileModalProps {
   onSuccess?: () => void
 }
 
-export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: ProfileModalProps) {
-  const [formData, setFormData] = useState<ProfileInput>({
-    name: "",
-    duration_days: 1,
-    duration_hours: 0,
-    price: 5000,
-    speed_limit: "2M/2M",
-    mikrotik_profile: "default"
-  })
+const EMPTY: ProfileInput = {
+  name: "",
+  duration_days: 0,
+  duration_hours: 0,
+  price: 5000,
+  speed_limit: "",
+  mikrotik_profile: "",
+}
 
+export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: ProfileModalProps) {
+  const [formData, setFormData] = useState<ProfileInput>(EMPTY)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (initialData && open) {
-      setFormData(initialData)
-    } else if (!open && !initialData) {
-      setFormData({
-        name: "",
-        duration_days: 1,
-        duration_hours: 0,
-        price: 5000,
-        speed_limit: "2M/2M",
-        mikrotik_profile: "default"
-      })
-    }
-  }, [initialData, open])
+  const [mtProfiles, setMtProfiles] = useState<MikrotikProfile[]>([])
+  const [mtLoading, setMtLoading] = useState(false)
+  const [mtError, setMtError] = useState<string | null>(null)
+  const [mtFetched, setMtFetched] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (open) {
+      setFormData(initialData ?? EMPTY)
+      setError(null)
+      fetchMtProfiles()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData])
+
+  const fetchMtProfiles = async () => {
+    if (mtFetched && mtProfiles.length > 0) return
+    setMtLoading(true)
+    setMtError(null)
+    try {
+      const res = await fetch("/api/mikrotik/profiles")
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Gagal mengambil profile")
+      setMtProfiles(data.profiles ?? [])
+      setMtFetched(true)
+    } catch (e: unknown) {
+      setMtError(e instanceof Error ? e.message : "Gagal terhubung ke MikroTik")
+    } finally {
+      setMtLoading(false)
+    }
+  }
+
+  const handleMtSelect = (name: string) => {
+    const found = mtProfiles.find((p) => p.name === name)
+    if (!found) {
+      setFormData((prev) => ({ ...prev, mikrotik_profile: name }))
+      return
+    }
+    setFormData((prev) => ({
+      ...prev,
+      mikrotik_profile: found.name,
+      speed_limit: found.speed_limit ?? "",
+      duration_days: found.duration_days,
+      duration_hours: found.duration_hours,
+    }))
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'number' ? Number(value) : value 
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "number" ? Number(value) : value,
     }))
   }
 
@@ -71,14 +111,12 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       })
 
       const data = await res.json()
       if (!res.ok) {
-        if (data.issues) {
-          throw new Error(Object.values(data.issues)[0] as string)
-        }
+        if (data.issues) throw new Error(Object.values(data.issues)[0] as string)
         throw new Error(data.message || "Gagal menyimpan profile")
       }
 
@@ -91,16 +129,18 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
     }
   }
 
+  const selectedMt = mtProfiles.find((p) => p.name === formData.mikrotik_profile)
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !loading && onOpenChange(isOpen)}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-blue-600" />
             {initialData ? "Edit Profile Voucher" : "Tambah Profile Voucher"}
           </DialogTitle>
           <DialogDescription>
-            Konfigurasi paket voucher untuk disinkronisasikan sebagai User Profile MikroTik.
+            Pilih profile dari MikroTik — speed dan durasi diambil otomatis.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,87 +151,107 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          
+          {/* Nama */}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1">Nama Profile / Nama Paket</label>
+            <label className="text-sm font-semibold text-slate-700 block mb-1">Nama Paket</label>
             <input
               name="name"
               required
               value={formData.name}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              placeholder="Contoh: Paket 1 Hari 3M"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+              placeholder="Contoh: Paket Harian 3Mbps"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1">Harga (Base Price)</label>
-              <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-                <span className="flex items-center px-3 bg-slate-100 text-slate-500 font-medium border-r border-slate-200 uppercase text-xs">Rp</span>
-                <input
-                  name="price"
-                  type="number"
-                  min={0}
-                  required
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="w-full bg-transparent px-3 py-2 text-sm focus:outline-none"
-                  placeholder="3000"
-                />
-              </div>
+          {/* Harga */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block mb-1">Harga (Rp)</label>
+            <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+              <span className="flex items-center px-3 bg-slate-100 text-slate-500 font-medium border-r border-slate-200 text-xs uppercase">Rp</span>
+              <input
+                name="price"
+                type="number"
+                min={0}
+                required
+                value={formData.price}
+                onChange={handleChange}
+                className="w-full bg-transparent px-3 py-2 text-sm focus:outline-none"
+                placeholder="5000"
+              />
             </div>
-            
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1">MikroTik Profile ID</label>
+          </div>
+
+          {/* MikroTik Profile */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-semibold text-slate-700">Profile MikroTik</label>
+              <button
+                type="button"
+                onClick={() => { setMtFetched(false); fetchMtProfiles() }}
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                disabled={mtLoading}
+              >
+                <RefreshCw className={`w-3 h-3 ${mtLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+            </div>
+
+            {mtError && (
+              <p className="text-xs text-red-500 mb-1">{mtError} — masukkan nama manual di bawah.</p>
+            )}
+
+            {mtProfiles.length > 0 ? (
+              <select
+                value={formData.mikrotik_profile}
+                onChange={(e) => handleMtSelect(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                required
+              >
+                <option value="">-- Pilih Profile --</option>
+                {mtProfiles.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}
+                    {p.speed_limit ? ` (${p.speed_limit})` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
               <input
                 name="mikrotik_profile"
                 required
                 value={formData.mikrotik_profile}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="default / 3M-1D"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                placeholder={mtLoading ? "Mengambil data MikroTik..." : "default / 3M-1D"}
+                disabled={mtLoading}
               />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1">Masa Aktif (Hari)</label>
-              <input
-                name="duration_days"
-                type="number"
-                min={0}
-                required
-                value={formData.duration_days}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1">Masa Aktif (Jam)</label>
-              <input
-                name="duration_hours"
-                type="number"
-                min={0}
-                max={23}
-                required
-                value={formData.duration_hours}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="text-sm font-semibold text-slate-700 block mb-1">Speed Limit (Rate Limit)</label>
-              <input
-                name="speed_limit"
-                value={formData.speed_limit}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="Misal: 2M/2M"
-              />
-            </div>
+            )}
           </div>
+
+          {/* Auto-filled speed & duration from MikroTik */}
+          {selectedMt && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 mb-3">
+                <CheckCircle2 className="w-4 h-4" />
+                Data otomatis dari MikroTik
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block mb-0.5">Speed Limit</span>
+                  <span className="font-semibold text-slate-800">{selectedMt.speed_limit || "No limit"}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider block mb-0.5">Durasi</span>
+                  <span className="font-semibold text-slate-800">
+                    {selectedMt.duration_days > 0 ? `${selectedMt.duration_days} hari ` : ""}
+                    {selectedMt.duration_hours > 0 ? `${selectedMt.duration_hours} jam` : ""}
+                    {selectedMt.duration_days === 0 && selectedMt.duration_hours === 0 ? "Tidak terbatas" : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
@@ -204,7 +264,7 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || mtLoading}
               className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}

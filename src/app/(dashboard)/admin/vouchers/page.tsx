@@ -11,18 +11,20 @@ export const metadata = {
 export default async function AdminVouchersPage({
   searchParams,
 }: {
-  searchParams: { page?: string; status?: string; search?: string; profileId?: string; tab?: string }
+  searchParams: Promise<{ page?: string; status?: string; search?: string; profileId?: string; tab?: string }>
 }) {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
-  const page = parseInt(searchParams.page ?? "1")
+  const sp = await searchParams
+
+  const page = parseInt(sp.page ?? "1")
   const limit = 20
   const skip = (page - 1) * limit
 
-  const statusFilter = searchParams.status
-  const searchFilter = searchParams.search
-  const profileFilter = searchParams.profileId
+  const statusFilter = sp.status
+  const searchFilter = sp.search
+  const profileFilter = sp.profileId
 
   // Build voucher filter
   const whereCondition: Prisma.VoucherWhereInput = {}
@@ -69,6 +71,10 @@ export default async function AdminVouchersPage({
     user_name: v.user?.name ?? null,
     status: v.status,
     generated_at: v.generated_at.toISOString(),
+    used_at: v.used_at?.toISOString() ?? null,
+    expired_at: v.expired_at?.toISOString() ?? null,
+    client_ip: v.client_ip ?? null,
+    client_mac: v.client_mac ?? null,
     price_charged: Number(v.price_charged),
   }))
 

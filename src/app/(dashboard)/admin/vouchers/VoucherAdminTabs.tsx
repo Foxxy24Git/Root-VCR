@@ -4,6 +4,7 @@ import * as React from "react"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ProfileModal, ProfileInput } from "@/components/modals/ProfileModal"
+import { VoucherDetailModal, VoucherDetail } from "@/components/modals/VoucherDetailModal"
 import {
   Zap, List, Wifi, Plus, RefreshCw,
   Pencil, Trash2, Loader2, Search, Filter,
@@ -29,6 +30,10 @@ interface Voucher {
   user_name: string | null
   status: string
   generated_at: string
+  used_at: string | null
+  expired_at: string | null
+  client_ip: string | null
+  client_mac: string | null
   price_charged: number
 }
 
@@ -98,7 +103,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
       await fetch(`/api/profiles/${profile.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...profile, is_active: !profile.is_active }),
+        body: JSON.stringify({ is_active: !profile.is_active }),
       })
       refresh()
     } catch {
@@ -106,9 +111,21 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
     }
   }
 
+  const openEdit = (p: Profile) => {
+    setEditProfile({
+      id: p.id,
+      name: p.name,
+      duration_days: p.duration_days,
+      duration_hours: p.duration_hours,
+      price: p.price,
+      speed_limit: p.speed_limit ?? "",
+      mikrotik_profile: p.mikrotik_profile,
+    })
+    setProfileModalOpen(true)
+  }
+
   return (
     <div className="space-y-4">
-      {/* Action Bar */}
       <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
         <div className="flex gap-2">
           <button
@@ -131,7 +148,6 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
         )}
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
@@ -163,16 +179,14 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                     <td className="px-6 py-4 text-center text-slate-700">
                       {p.duration_days > 0 ? `${p.duration_days}h ` : ""}
                       {p.duration_hours > 0 ? `${p.duration_hours}j` : ""}
+                      {p.duration_days === 0 && p.duration_hours === 0 ? "-" : ""}
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-slate-900">
                       Rp {p.price.toLocaleString("id-ID")}
                     </td>
                     <td className="px-6 py-4 text-center text-slate-600">{p.speed_limit || "-"}</td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleToggleActive(p)}
-                        className="inline-flex items-center gap-1.5"
-                      >
+                      <button onClick={() => handleToggleActive(p)} className="inline-flex items-center gap-1.5">
                         {p.is_active ? (
                           <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                             <CheckCircle2 className="w-3 h-3" />Aktif
@@ -186,10 +200,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => { setEditProfile({ ...p, speed_limit: p.speed_limit ?? "" }); setProfileModalOpen(true) }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg"
-                        >
+                        <button onClick={() => openEdit(p)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
@@ -227,7 +238,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                   <span className="text-slate-400 text-xs ml-2">{p.duration_days}h {p.duration_hours}j</span>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => { setEditProfile({ ...p, speed_limit: p.speed_limit ?? "" }); setProfileModalOpen(true) }} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => openEdit(p)} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(p.id, p.name)} className="p-1.5 bg-red-50 text-red-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
@@ -267,6 +278,11 @@ function AllVouchers({
 }) {
   const limit = 20
   const totalPages = Math.ceil(totalVouchers / limit)
+  const [selectedVoucher, setSelectedVoucher] = useState<VoucherDetail | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const router = useRouter()
+  const [, startTransition] = useTransition()
+  const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null)
 
   const buildHref = (overrides: Record<string, string>) => {
     const params = new URLSearchParams({
@@ -280,9 +296,46 @@ function AllVouchers({
     return `?${params.toString()}`
   }
 
+  const openDetail = (v: Voucher) => {
+    setSelectedVoucher({
+      id: v.id,
+      code: v.code,
+      profile: v.profile_name,
+      user_name: v.user_name,
+      generated_at: v.generated_at,
+      used_at: v.used_at,
+      expired_at: v.expired_at,
+      status: v.status,
+      client_ip: v.client_ip,
+      client_mac: v.client_mac,
+      price_charged: v.price_charged,
+    })
+    setDetailOpen(true)
+  }
+
+  const handleExport = async (format: "excel" | "pdf") => {
+    setExporting(format)
+    try {
+      const res = await fetch(`/api/vouchers/export?format=${format}`)
+      if (!res.ok) throw new Error("Export gagal")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `vouchers-${Date.now()}.${format === "excel" ? "xlsx" : "pdf"}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert("Gagal mengekspor data")
+    } finally {
+      setExporting(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      {/* Filter Bar */}
       <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 justify-between items-center bg-slate-50/50">
           <form className="flex flex-col sm:flex-row w-full gap-3" method="GET">
@@ -312,12 +365,22 @@ function AllVouchers({
               <button type="submit" className="bg-slate-900 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800">Filter</button>
             </div>
           </form>
-          <div className="flex gap-2">
-            <button className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold">
-              <FileDown className="w-4 h-4" /> PDF
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => handleExport("pdf")}
+              disabled={exporting === "pdf"}
+              className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              {exporting === "pdf" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              PDF
             </button>
-            <button className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-semibold">
-              <FileText className="w-4 h-4" /> Excel
+            <button
+              onClick={() => handleExport("excel")}
+              disabled={exporting === "excel"}
+              className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              {exporting === "excel" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              Excel
             </button>
           </div>
         </div>
@@ -345,7 +408,11 @@ function AllVouchers({
                 </tr>
               ) : (
                 vouchers.map(v => (
-                  <tr key={v.id} className="hover:bg-slate-50/50">
+                  <tr
+                    key={v.id}
+                    className="hover:bg-blue-50/30 cursor-pointer transition-colors"
+                    onClick={() => openDetail(v)}
+                  >
                     <td className="px-6 py-4 font-bold text-slate-900 tracking-wider">{v.code}</td>
                     <td className="px-6 py-4 text-slate-600">{v.user_name ?? "-"}</td>
                     <td className="px-6 py-4 font-medium text-blue-600">{v.profile_name ?? "-"}</td>
@@ -375,7 +442,7 @@ function AllVouchers({
         {/* Mobile */}
         <div className="md:hidden divide-y divide-slate-100">
           {vouchers.map(v => (
-            <div key={v.id} className="p-4">
+            <div key={v.id} className="p-4 cursor-pointer hover:bg-blue-50/30" onClick={() => openDetail(v)}>
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <span className="font-bold text-slate-900 tracking-wider">{v.code}</span>
@@ -414,6 +481,13 @@ function AllVouchers({
           </div>
         )}
       </div>
+
+      <VoucherDetailModal
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        voucher={selectedVoucher}
+        onActionSuccess={() => startTransition(() => router.refresh())}
+      />
     </div>
   )
 }
@@ -527,7 +601,6 @@ export function VoucherAdminTabs({
 
   return (
     <div className="space-y-6">
-      {/* Tab Bar */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
         {tabs.map(tab => (
           <button

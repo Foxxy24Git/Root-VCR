@@ -3,7 +3,9 @@ import { withMikrotik, testMikrotikConnection } from "@/lib/mikrotik"
 export interface HotspotProfile {
   ".id": string
   name: string
-  [key: string]: string
+  "rate-limit"?: string
+  "session-timeout"?: string
+  [key: string]: string | undefined
 }
 
 export interface HotspotUser {
@@ -22,36 +24,48 @@ export interface HotspotActive {
   [key: string]: string | undefined
 }
 
+export interface HotspotCookie {
+  ".id": string
+  user: string
+  [key: string]: string | undefined
+}
+
 export interface ConnectionTestResult {
   ok: boolean
   error?: string
   latencyMs?: number
 }
 
-/**
- * Test koneksi ke MikroTik.
- * Wrapper dari lib/mikrotik.ts — tidak melempar exception.
- */
+export function parseSessionTimeout(timeout: string | undefined): { days: number; hours: number } {
+  if (!timeout || timeout === "0s" || timeout === "none") return { days: 0, hours: 0 }
+  // Format: "1d", "1d12h", "24:00:00", "00:30:00"
+  if (/^\d+d/.test(timeout)) {
+    const days = parseInt(timeout)
+    const hoursMatch = timeout.match(/(\d+)h/)
+    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0
+    return { days: isNaN(days) ? 0 : days, hours }
+  }
+  // HH:MM:SS format
+  const parts = timeout.split(":")
+  if (parts.length === 3) {
+    const totalHours = parseInt(parts[0])
+    const days = Math.floor(totalHours / 24)
+    const hours = totalHours % 24
+    return { days, hours }
+  }
+  return { days: 0, hours: 0 }
+}
+
 export async function testConnection(): Promise<ConnectionTestResult> {
   return testMikrotikConnection()
 }
 
-/**
- * Ambil semua hotspot profile dari MikroTik.
- */
 export async function getHotspotProfiles(): Promise<HotspotProfile[]> {
   return withMikrotik((api) =>
-    api.menu("/ip/hotspot/profile").getAll() as Promise<HotspotProfile[]>
+    api.menu("/ip/hotspot/user-profile").getAll() as Promise<HotspotProfile[]>
   )
 }
 
-/**
- * Buat hotspot user baru di MikroTik.
- *
- * @param code   - username / kode voucher
- * @param password - password hotspot user
- * @param profile  - nama profile hotspot (misal "Paket 1 Hari")
- */
 export async function createHotspotUser(
   code: string,
   password: string,
@@ -63,25 +77,17 @@ export async function createHotspotUser(
       password,
       profile,
     })
-    // routeros-client returns the created object; extract the .id field
     const obj = result as unknown as { id: string }
     return { id: obj.id }
   })
 }
 
-/**
- * Ambil semua active hotspot session dari MikroTik.
- */
 export async function getActiveUsers(): Promise<HotspotActive[]> {
   return withMikrotik((api) =>
     api.menu("/ip/hotspot/active").getAll() as Promise<HotspotActive[]>
   )
 }
 
-/**
- * Hapus hotspot user berdasarkan nama (kode voucher).
- * Tidak melempar exception jika user tidak ditemukan.
- */
 export async function deleteUser(code: string): Promise<void> {
   await withMikrotik(async (api) => {
     const users = (await api
@@ -93,5 +99,33 @@ export async function deleteUser(code: string): Promise<void> {
 
     const id = users[0][".id"]
     await api.menu("/ip/hotspot/user").where(".id", id).remove()
+  })
+}
+
+export async function logoutHotspotUser(code: string): Promise<void> {
+  await withMikrotik(async (api) => {
+    const sessions = (await api
+      .menu("/ip/hotspot/active")
+      .where("user", code)
+      .getAll()) as HotspotActive[]
+
+    for (const s of sessions) {
+      const id = s[".id"]
+      if (id) await api.menu("/ip/hotspot/active").where(".id", id).remove()
+    }
+  })
+}
+
+export async function deleteHotspotCookie(code: string): Promise<void> {
+  await withMikrotik(async (api) => {
+    const cookies = (await api
+      .menu("/ip/hotspot/cookie")
+      .where("user", code)
+      .getAll()) as HotspotCookie[]
+
+    for (const c of cookies) {
+      const id = c[".id"]
+      if (id) await api.menu("/ip/hotspot/cookie").where(".id", id).remove()
+    }
   })
 }

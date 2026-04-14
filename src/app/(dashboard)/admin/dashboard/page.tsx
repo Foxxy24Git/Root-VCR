@@ -101,30 +101,42 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Voucher (Hari Ini)"
-          value={vouchersToday.toLocaleString("id-ID")}
-          icon={Ticket}
-          iconClassName="bg-blue-50 text-blue-600"
-        />
-        <StatsCard
-          title="Total Saldo Reseller"
-          value={`Rp ${(totalResellerSaldo._sum.balance || 0).toLocaleString("id-ID")}`}
-          icon={WalletIcon}
-          iconClassName="bg-indigo-50 text-indigo-600"
-        />
-        <StatsCard
-          title="Revenue (Bulan Ini)"
-          value={`Rp ${(revenueMTD._sum.price_charged || 0).toLocaleString("id-ID")}`}
-          icon={Activity}
-          iconClassName="bg-green-50 text-green-600"
-        />
-        <StatsCard
-          title="Reseller Aktif"
-          value={activeResellers.toLocaleString("id-ID")}
-          icon={Users}
-          iconClassName="bg-amber-50 text-amber-600"
-        />
+        <Link href="/admin/vouchers?date=today" className="block">
+          <StatsCard
+            title="Voucher (Hari Ini)"
+            value={vouchersToday.toLocaleString("id-ID")}
+            icon={Ticket}
+            iconClassName="bg-blue-50 text-blue-600"
+            className="cursor-pointer"
+          />
+        </Link>
+        <Link href="/admin/wallet" className="block">
+          <StatsCard
+            title="Total Saldo Reseller"
+            value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(totalResellerSaldo._sum.balance || 0))}
+            icon={WalletIcon}
+            iconClassName="bg-indigo-50 text-indigo-600"
+            className="cursor-pointer"
+          />
+        </Link>
+        <Link href="/admin/revenue" className="block">
+          <StatsCard
+            title="Revenue (Bulan Ini)"
+            value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(revenueMTD._sum.price_charged || 0))}
+            icon={Activity}
+            iconClassName="bg-green-50 text-green-600"
+            className="cursor-pointer"
+          />
+        </Link>
+        <Link href="/admin/resellers" className="block">
+          <StatsCard
+            title="Reseller Aktif"
+            value={activeResellers.toLocaleString("id-ID")}
+            icon={Users}
+            iconClassName="bg-amber-50 text-amber-600"
+            className="cursor-pointer"
+          />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

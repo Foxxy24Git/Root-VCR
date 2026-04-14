@@ -34,6 +34,7 @@ export function VouchersClient({ vouchers }: VouchersClientProps) {
       id: v.id,
       code: v.code,
       profile: v.profile?.name ?? null,
+      user_name: null,
       generated_at: v.generated_at,
       used_at: v.used_at,
       expired_at: v.expired_at,
