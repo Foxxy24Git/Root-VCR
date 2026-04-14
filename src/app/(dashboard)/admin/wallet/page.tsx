@@ -45,19 +45,19 @@ export default async function AdminWalletPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Saldo Beredar"
-          value={`Rp ${(aggregate._sum.balance || 0).toLocaleString("id-ID")}`}
+          value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.balance || 0))}
           icon={WalletIcon}
           iconClassName="bg-indigo-50 text-indigo-600"
         />
         <StatsCard
           title="Total Top Up (Masuk)"
-          value={`Rp ${(aggregate._sum.total_topup || 0).toLocaleString("id-ID")}`}
+          value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.total_topup || 0))}
           icon={ArrowDownRight}
           iconClassName="bg-green-50 text-green-600"
         />
         <StatsCard
           title="Total Pemakaian (Keluar)"
-          value={`Rp ${(aggregate._sum.total_spent || 0).toLocaleString("id-ID")}`}
+          value={new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(aggregate._sum.total_spent || 0))}
           icon={ArrowUpRight}
           iconClassName="bg-red-50 text-red-600"
         />

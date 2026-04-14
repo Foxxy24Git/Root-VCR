@@ -14,7 +14,7 @@ export default async function AdminSettingsPage() {
   const [adminUser, settingsRows] = await Promise.all([
     prisma.user.findUnique({
       where: { id: user.id },
-      select: { id: true, name: true, email: true, phone: true, location: true },
+      select: { id: true, name: true, email: true, phone: true, location: true, avatar_url: true },
     }),
     prisma.setting.findMany(),
   ])
@@ -38,6 +38,7 @@ export default async function AdminSettingsPage() {
           email: adminUser.email,
           phone: adminUser.phone,
           location: adminUser.location,
+          avatar_url: adminUser.avatar_url,
         }}
         settings={settings as Record<string, string>}
       />

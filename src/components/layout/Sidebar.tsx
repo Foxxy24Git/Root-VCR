@@ -1,23 +1,36 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
 
 interface SidebarProps {
   role: 'admin' | 'reseller'
+  logoUrl?: string
+  companyName?: string
 }
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, logoUrl, companyName }: SidebarProps) {
   const pathname = usePathname()
   const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
+  const displayName = companyName || 'Root.VCR'
 
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-[240px] bg-white border-r border-gray-200 z-20">
       {/* Logo */}
-      <div className="h-14 flex items-center px-6 border-b border-gray-200 shrink-0">
-        <span className="text-lg font-bold text-primary">Root.VCR</span>
+      <div className="h-14 flex items-center px-6 border-b border-gray-200 shrink-0 gap-2">
+        {logoUrl ? (
+          <Image
+            src={logoUrl}
+            alt={displayName}
+            width={32}
+            height={32}
+            className="h-8 w-auto object-contain"
+          />
+        ) : null}
+        <span className="text-lg font-bold text-primary truncate">{displayName}</span>
       </div>
 
       {/* Nav Items */}

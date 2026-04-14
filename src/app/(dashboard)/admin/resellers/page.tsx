@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { ResellerManagement } from "./ResellerManagement"
 import { Users, UserCheck, Snowflake, TrendingUp } from "lucide-react"
+import Link from "next/link"
 
 export const metadata = {
   title: "Reseller Management — Root.VCR",
@@ -15,9 +16,11 @@ export default async function AdminResellersPage() {
   const users = await prisma.user.findMany({
     where: { role: "reseller" },
     orderBy: { created_at: "desc" },
-    include: {
-      wallet: { select: { balance: true, total_spent: true } }
-    }
+    select: {
+      id: true, name: true, email: true, phone: true, avatar_url: true,
+      fee_percentage: true, is_active: true, is_frozen: true, created_at: true,
+      wallet: { select: { balance: true, total_spent: true } },
+    },
   })
 
   const resellers = users.map(u => ({
@@ -31,6 +34,7 @@ export default async function AdminResellersPage() {
     created_at: u.created_at.toISOString(),
     balance: Number(u.wallet?.balance ?? 0),
     total_spent: Number(u.wallet?.total_spent ?? 0),
+    avatar_url: u.avatar_url ?? null,
   }))
 
   const totalActive = resellers.filter(r => !r.is_frozen && r.is_active).length
@@ -76,16 +80,20 @@ export default async function AdminResellersPage() {
           <p className="text-3xl font-bold text-slate-900">{totalFrozen}</p>
           <p className="text-xs text-slate-400 mt-1">Akun dibekukan</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-amber-600" />
+        <Link href="/admin/revenue" className="block hover:-translate-y-0.5 transition-transform">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 h-full">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-amber-600" />
+              </div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Omset</span>
             </div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Omset</span>
+            <p className="text-2xl font-bold text-slate-900">
+              {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(totalOmset)}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">Total omset semua reseller</p>
           </div>
-          <p className="text-2xl font-bold text-slate-900">Rp {totalOmset.toLocaleString("id-ID")}</p>
-          <p className="text-xs text-slate-400 mt-1">Total omset semua reseller</p>
-        </div>
+        </Link>
       </div>
 
       <ResellerManagement resellers={resellers} />

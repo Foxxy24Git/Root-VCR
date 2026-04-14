@@ -39,6 +39,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bad Request", message: "User tujuan bukan reseller!" }, { status: 400 })
     }
 
+    if (targetUser.is_frozen) {
+      return NextResponse.json({ error: "Forbidden", message: "Akun reseller dibekukan, tidak bisa melakukan topup" }, { status: 403 })
+    }
+
     // Do this inside a Prisma transaction
     const wallet = await prisma.$transaction(async (tx) => {
       // Find or create wallet

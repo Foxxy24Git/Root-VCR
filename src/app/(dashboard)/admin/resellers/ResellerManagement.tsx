@@ -1,15 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { AddResellerModal } from "@/components/modals/AddResellerModal"
 import { TopupModal } from "@/components/modals/TopupModal"
 import {
   UserPlus, Search, Snowflake, Pencil, Wallet,
-  CheckCircle2, XCircle, Loader2
+  CheckCircle2, XCircle, Loader2, Camera, Eye, EyeOff
 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import Image from "next/image"
 
 interface Reseller {
   id: string
@@ -22,6 +23,7 @@ interface Reseller {
   created_at: string
   balance: number
   total_spent: number
+  avatar_url?: string | null
 }
 
 interface ResellerManagementProps {
@@ -41,35 +43,78 @@ function EditResellerDialog({
   reseller: Reseller | null
   onSuccess: () => void
 }) {
-  const [formData, setFormData] = React.useState({ name: "", phone: "", fee_percentage: 0 })
+  const [formData, setFormData] = React.useState({
+    name: "",
+    email: "",
+    phone: "",
+    fee_percentage: 0,
+    password: "",
+    avatar_url: "" as string | null,
+  })
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     if (reseller && open) {
       setFormData({
         name: reseller.name,
+        email: reseller.email,
         phone: reseller.phone ?? "",
         fee_percentage: reseller.fee_percentage,
+        password: "",
+        avatar_url: reseller.avatar_url ?? null,
       })
+      setAvatarPreview(reseller.avatar_url ?? null)
+      setAvatarFile(null)
       setError(null)
+      setShowPassword(false)
     }
   }, [reseller, open])
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!reseller) return
     setLoading(true)
     setError(null)
+
     try {
+      let avatar_url = formData.avatar_url
+
+      // Upload avatar if a new file was picked
+      if (avatarFile) {
+        const fd = new FormData()
+        fd.append("file", avatarFile)
+        fd.append("userId", reseller.id)
+        const uploadRes = await fetch("/api/upload/avatar", { method: "POST", body: fd })
+        const uploadData = await uploadRes.json()
+        if (!uploadRes.ok) throw new Error(uploadData.message || "Gagal upload avatar")
+        avatar_url = uploadData.url
+      }
+
+      const body: Record<string, unknown> = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        fee_percentage: formData.fee_percentage,
+        avatar_url,
+      }
+      if (formData.password) body.password = formData.password
+
       const res = await fetch(`/api/users/${reseller.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          phone: formData.phone || null,
-          fee_percentage: formData.fee_percentage,
-        }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || "Gagal memperbarui reseller")
@@ -82,9 +127,11 @@ function EditResellerDialog({
     }
   }
 
+  const initials = reseller?.name.charAt(0).toUpperCase() ?? "?"
+
   return (
     <Dialog open={open} onOpenChange={(v) => !loading && onOpenChange(v)}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="w-5 h-5 text-blue-600" />
@@ -98,24 +145,78 @@ function EditResellerDialog({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {/* Avatar */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {avatarPreview ? (
+                <Image
+                  src={avatarPreview}
+                  alt="Avatar"
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-2xl font-bold">
+                  {initials}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <Camera className="w-3.5 h-3.5 text-slate-600" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+            </div>
+            <div className="text-xs text-slate-500">
+              <p className="font-medium text-slate-700">Foto Profil</p>
+              <p>JPG, PNG, WebP — maks 2MB</p>
+            </div>
+          </div>
+
+          {/* Name */}
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-1">Nama Lengkap</label>
             <input
               required
               value={formData.name}
               onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             />
           </div>
+
+          {/* Email */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block mb-1">Email</label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Phone */}
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-1">No. WhatsApp</label>
             <input
               value={formData.phone}
               onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
               placeholder="08123456789"
             />
           </div>
+
+          {/* Fee */}
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-1">Fee Percentage (%)</label>
             <div className="flex bg-slate-50 border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20">
@@ -131,9 +232,44 @@ function EditResellerDialog({
               <span className="flex items-center px-3 bg-slate-100 text-slate-500 font-medium border-l border-slate-200">%</span>
             </div>
           </div>
+
+          {/* Password */}
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block mb-1">
+              Password Baru <span className="text-slate-400 font-normal">(kosongkan jika tidak diubah)</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                placeholder="Minimal 6 karakter"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => onOpenChange(false)} disabled={loading} className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800">Batal</button>
-            <button type="submit" disabled={loading} className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Simpan
             </button>
@@ -175,15 +311,14 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
   const handleFreezeToggle = async (reseller: Reseller) => {
     setFreezeLoading(reseller.id)
     try {
-      const res = await fetch(`/api/users/${reseller.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_frozen: !reseller.is_frozen }),
-      })
-      if (!res.ok) throw new Error("Gagal mengubah status")
+      const res = await fetch(`/api/users/${reseller.id}/freeze`, { method: "PATCH" })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message || "Gagal mengubah status")
+      }
       refresh()
-    } catch {
-      alert("Gagal mengubah status reseller")
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal mengubah status reseller")
     } finally {
       setFreezeLoading(null)
     }
@@ -251,9 +386,19 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
                   <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                          {r.name.charAt(0).toUpperCase()}
-                        </div>
+                        {r.avatar_url ? (
+                          <Image
+                            src={r.avatar_url}
+                            alt={r.name}
+                            width={36}
+                            height={36}
+                            className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {r.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-slate-900">{r.name}</p>
                           <p className="text-xs text-slate-500">{r.email}</p>
@@ -290,7 +435,8 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
                         <button
                           onClick={() => { setSelectedReseller(r); setTopupOpen(true) }}
                           title="Top Up Saldo"
-                          className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors"
+                          disabled={r.is_frozen}
+                          className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Wallet className="w-4 h-4" />
                         </button>
@@ -338,9 +484,19 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
               <div key={r.id} className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold shrink-0">
-                      {r.name.charAt(0).toUpperCase()}
-                    </div>
+                    {r.avatar_url ? (
+                      <Image
+                        src={r.avatar_url}
+                        alt={r.name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold shrink-0">
+                        {r.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div>
                       <p className="font-semibold text-slate-900">{r.name}</p>
                       <p className="text-xs text-slate-500">{r.email}</p>
@@ -369,7 +525,8 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setSelectedReseller(r); setTopupOpen(true) }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold"
+                    disabled={r.is_frozen}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Wallet className="w-3.5 h-3.5" /> Top Up
                   </button>
@@ -395,11 +552,7 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
       </div>
 
       {/* Modals */}
-      <AddResellerModal
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onSuccess={refresh}
-      />
+      <AddResellerModal open={addOpen} onOpenChange={setAddOpen} onSuccess={refresh} />
       <EditResellerDialog
         open={editOpen}
         onOpenChange={setEditOpen}
