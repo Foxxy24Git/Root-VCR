@@ -62,7 +62,7 @@ export async function testConnection(): Promise<ConnectionTestResult> {
 
 export async function getHotspotProfiles(): Promise<HotspotProfile[]> {
   return withMikrotik((api) =>
-    api.menu("/ip/hotspot/user-profile").getAll() as Promise<HotspotProfile[]>
+    api.menu("/ip/hotspot/user/profile").getAll() as Promise<HotspotProfile[]>
   )
 }
 

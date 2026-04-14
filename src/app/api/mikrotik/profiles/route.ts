@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/api-helpers"
-import { getHotspotProfiles, parseSessionTimeout } from "@/services/mikrotik.service"
+import { createMikrotikClient } from "@/lib/mikrotik"
+import { parseSessionTimeout } from "@/services/mikrotik.service"
 
 export async function GET() {
   const { error } = await requireAdmin()
   if (error) return error
 
+  const client = createMikrotikClient()
   try {
-    const profiles = await getHotspotProfiles()
-    const mapped = profiles.map((p) => {
+    const conn = await client.connect()
+    const profiles = await conn.menu("/ip/hotspot/user/profile").getAll()
+    await client.disconnect()
+
+    const mapped = (profiles as Array<Record<string, string | undefined>>).map((p) => {
       const dur = parseSessionTimeout(p["session-timeout"])
       return {
         name: p.name,
@@ -20,9 +25,10 @@ export async function GET() {
     })
     return NextResponse.json({ profiles: mapped })
   } catch {
+    await client.disconnect().catch(() => {})
     return NextResponse.json(
-      { error: "Gagal mengambil profile dari MikroTik" },
-      { status: 503 }
+      { error: "MikroTik connection failed" },
+      { status: 500 }
     )
   }
 }

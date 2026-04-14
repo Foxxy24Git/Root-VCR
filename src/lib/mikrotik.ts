@@ -64,9 +64,9 @@ export async function withMikrotik<T>(
   fn: (api: ReturnType<RouterOSClient["api"]>) => Promise<T>
 ): Promise<T> {
   const client = createMikrotikClient()
-  await client.connect()
+  const conn = await client.connect()
   try {
-    return await fn(client.api())
+    return await fn(conn)
   } finally {
     await client.disconnect().catch(() => {
       // Abaikan error disconnect — koneksi mungkin sudah putus
