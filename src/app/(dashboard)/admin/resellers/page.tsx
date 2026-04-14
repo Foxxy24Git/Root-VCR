@@ -5,6 +5,12 @@ import { ResellerManagement } from "./ResellerManagement"
 import { Users, UserCheck, Snowflake, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
+export interface ProfileOption {
+  id: string
+  name: string
+  price: number
+}
+
 export const metadata = {
   title: "Reseller Management — Root.VCR",
 }
@@ -13,15 +19,22 @@ export default async function AdminResellersPage() {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
-  const users = await prisma.user.findMany({
-    where: { role: "reseller" },
-    orderBy: { created_at: "desc" },
-    select: {
-      id: true, name: true, email: true, phone: true, avatar_url: true,
-      fee_percentage: true, is_active: true, is_frozen: true, created_at: true,
-      wallet: { select: { balance: true, total_spent: true } },
-    },
-  })
+  const [users, allProfiles] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "reseller" },
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true, name: true, email: true, phone: true, avatar_url: true,
+        fee_percentage: true, is_active: true, is_frozen: true, created_at: true,
+        wallet: { select: { balance: true, total_spent: true } },
+      },
+    }),
+    prisma.profile.findMany({
+      where: { is_active: true },
+      orderBy: { price: "asc" },
+      select: { id: true, name: true, price: true },
+    }),
+  ])
 
   const resellers = users.map(u => ({
     id: u.id,
@@ -40,6 +53,12 @@ export default async function AdminResellersPage() {
   const totalActive = resellers.filter(r => !r.is_frozen && r.is_active).length
   const totalFrozen = resellers.filter(r => r.is_frozen).length
   const totalOmset = resellers.reduce((sum, r) => sum + r.total_spent, 0)
+
+  const profileOptions: ProfileOption[] = allProfiles.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: Number(p.price),
+  }))
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
@@ -96,7 +115,7 @@ export default async function AdminResellersPage() {
         </Link>
       </div>
 
-      <ResellerManagement resellers={resellers} />
+      <ResellerManagement resellers={resellers} profiles={profileOptions} />
     </div>
   )
 }

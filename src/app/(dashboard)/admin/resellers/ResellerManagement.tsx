@@ -7,10 +7,12 @@ import { AddResellerModal } from "@/components/modals/AddResellerModal"
 import { TopupModal } from "@/components/modals/TopupModal"
 import {
   UserPlus, Search, Snowflake, Pencil, Wallet,
-  CheckCircle2, XCircle, Loader2, Camera, Eye, EyeOff
+  CheckCircle2, XCircle, Loader2, Camera, Eye, EyeOff,
+  ShieldCheck
 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import Image from "next/image"
+import type { ProfileOption } from "./page"
 
 interface Reseller {
   id: string
@@ -28,6 +30,7 @@ interface Reseller {
 
 interface ResellerManagementProps {
   resellers: Reseller[]
+  profiles: ProfileOption[]
 }
 
 // ── Edit Reseller Dialog ──────────────────────────────────────────────────────
@@ -280,9 +283,153 @@ function EditResellerDialog({
   )
 }
 
+// ── Assign Profiles Dialog ────────────────────────────────────────────────────
+
+function AssignProfilesDialog({
+  open,
+  onOpenChange,
+  reseller,
+  profiles,
+  onSuccess,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  reseller: Reseller | null
+  profiles: ProfileOption[]
+  onSuccess: () => void
+}) {
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
+  const [loading, setLoading] = React.useState(false)
+  const [fetching, setFetching] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (!open || !reseller) return
+    setError(null)
+    setFetching(true)
+    fetch(`/api/profiles/assign?userId=${reseller.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const enabled = new Set<string>(
+          (data.assignments as Array<{ profile_id: string; is_enabled: boolean }>)
+            .filter((a) => a.is_enabled)
+            .map((a) => a.profile_id)
+        )
+        setSelectedIds(enabled)
+      })
+      .catch(() => setError("Gagal memuat data profile"))
+      .finally(() => setFetching(false))
+  }, [open, reseller])
+
+  const toggle = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!reseller) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/profiles/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: reseller.id, profileIds: Array.from(selectedIds) }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || "Gagal assign profile")
+      onSuccess()
+      onOpenChange(false)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !loading && onOpenChange(v)}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-blue-600" />
+            Assign Profil VCR
+          </DialogTitle>
+          <DialogDescription>
+            Pilih profil yang dapat digunakan oleh <strong>{reseller?.name}</strong>
+          </DialogDescription>
+        </DialogHeader>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {fetching ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+            </div>
+          ) : profiles.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-4">Belum ada profil aktif.</p>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {profiles.map((p) => (
+                <label
+                  key={p.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={() => toggle(p.id)}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{p.name}</p>
+                    <p className="text-xs text-slate-500">
+                      Rp {p.price.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-between items-center pt-2">
+            <span className="text-xs text-slate-500">{selectedIds.size} profil dipilih</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={loading || fetching}
+                className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
+              >
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function ResellerManagement({ resellers: initialResellers }: ResellerManagementProps) {
+export function ResellerManagement({ resellers: initialResellers, profiles }: ResellerManagementProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
@@ -292,6 +439,7 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
   const [addOpen, setAddOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [topupOpen, setTopupOpen] = useState(false)
+  const [assignOpen, setAssignOpen] = useState(false)
   const [selectedReseller, setSelectedReseller] = useState<Reseller | null>(null)
   const [freezeLoading, setFreezeLoading] = useState<string | null>(null)
 
@@ -441,6 +589,13 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
                           <Wallet className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => { setSelectedReseller(r); setAssignOpen(true) }}
+                          title="Assign Profil"
+                          className="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition-colors"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => { setSelectedReseller(r); setEditOpen(true) }}
                           title="Edit"
                           className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
@@ -522,13 +677,19 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
                     <p className="font-bold text-slate-900">Rp {r.total_spent.toLocaleString("id-ID")}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => { setSelectedReseller(r); setTopupOpen(true) }}
                     disabled={r.is_frozen}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Wallet className="w-3.5 h-3.5" /> Top Up
+                  </button>
+                  <button
+                    onClick={() => { setSelectedReseller(r); setAssignOpen(true) }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Profil
                   </button>
                   <button
                     onClick={() => { setSelectedReseller(r); setEditOpen(true) }}
@@ -553,6 +714,13 @@ export function ResellerManagement({ resellers: initialResellers }: ResellerMana
 
       {/* Modals */}
       <AddResellerModal open={addOpen} onOpenChange={setAddOpen} onSuccess={refresh} />
+      <AssignProfilesDialog
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        reseller={selectedReseller}
+        profiles={profiles}
+        onSuccess={refresh}
+      />
       <EditResellerDialog
         open={editOpen}
         onOpenChange={setEditOpen}
