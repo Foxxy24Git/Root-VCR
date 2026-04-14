@@ -77,12 +77,12 @@ export async function POST(req: NextRequest) {
 
   // Ambil settings untuk kode format
   const settings = await prisma.setting.findMany({
-    where: { key: { in: ["voucher_prefix", "voucher_code_length", "voucher_code_format"] } },
+    where: { key: { in: ["voucher_prefix", "voucher_code_length", "voucher_code_format", "voucher_username_equals_password"] } },
   })
   const getSetting = (key: string, def: string) =>
     settings.find((s) => s.key === key)?.value ?? def
 
-  const prefix   = ""
+  const prefix   = getSetting("voucher_prefix", "")
   const codeLen  = parseInt(getSetting("voucher_code_length", "8"))
   const format   = getSetting("voucher_code_format", "alphanumeric_upper") as
     "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric" | "alpha"
@@ -176,10 +176,15 @@ export async function POST(req: NextRequest) {
     return created
   })
 
+  // Validate mikrotik_profile is set before syncing
+  if (!profile.mikrotik_profile) {
+    console.error("MIKROTIK ERROR: mikrotik_profile kosong untuk profile", profile.name)
+  }
+
   // Sync ke MikroTik (best-effort — tidak gagalkan request jika MikroTik unreachable)
   const syncResults = await Promise.allSettled(
     vouchers.map((v) =>
-      createHotspotUser(v.code, v.code, profile.name)
+      createHotspotUser(v.code, v.code, profile.mikrotik_profile)
     )
   )
 
@@ -188,6 +193,8 @@ export async function POST(req: NextRequest) {
   syncResults.forEach((result, i) => {
     if (result.status === "fulfilled") {
       syncedIds.push(vouchers[i].id)
+    } else {
+      console.error(`MIKROTIK ERROR [voucher ${vouchers[i].code}]:`, result.reason)
     }
   })
 

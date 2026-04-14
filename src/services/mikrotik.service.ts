@@ -1,4 +1,5 @@
-import { withMikrotik, testMikrotikConnection } from "@/lib/mikrotik"
+import { createMikrotikClient, testMikrotikConnection } from "@/lib/mikrotik"
+import { withMikrotik } from "@/lib/mikrotik"
 
 export interface HotspotProfile {
   ".id": string
@@ -69,17 +70,30 @@ export async function getHotspotProfiles(): Promise<HotspotProfile[]> {
 export async function createHotspotUser(
   code: string,
   password: string,
-  profile: string
-): Promise<{ id: string }> {
-  return withMikrotik(async (api) => {
-    const result = await api.menu("/ip/hotspot/user").add({
+  mikrotikProfile: string
+): Promise<{ success: boolean; id?: string }> {
+  if (!mikrotikProfile) {
+    throw new Error("mikrotik_profile tidak dikonfigurasi pada profil ini")
+  }
+
+  const client = createMikrotikClient()
+  try {
+    const conn = await client.connect()
+    const result = await conn.menu("/ip/hotspot/user").add({
       name: code,
-      password,
-      profile,
+      password: password,
+      profile: mikrotikProfile,
     })
-    const obj = result as unknown as { id: string }
-    return { id: obj.id }
-  })
+    await client.disconnect().catch(() => {})
+    const obj = result as unknown as { id?: string }
+    return { success: true, id: obj.id }
+  } catch (err) {
+    console.error("MIKROTIK ERROR [createHotspotUser]:", err)
+    await client.disconnect().catch(() => {})
+    throw new Error(
+      `Failed create hotspot user: ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
 }
 
 export async function getActiveUsers(): Promise<HotspotActive[]> {

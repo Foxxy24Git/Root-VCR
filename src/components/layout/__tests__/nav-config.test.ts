@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { ADMIN_NAV, RESELLER_NAV } from '../nav-config'
 
 describe('ADMIN_NAV', () => {
-  it('has exactly 6 items', () => {
-    expect(ADMIN_NAV).toHaveLength(6)
+  it('has exactly 7 items', () => {
+    expect(ADMIN_NAV).toHaveLength(7)
   })
 
-  it('has labels in order: Dashboard, Vouchers, Resellers, Wallet, Analytics, Settings', () => {
+  it('has labels in order: Dashboard, Vouchers, Resellers, Wallet, Analytics, VCR Config, Settings', () => {
     const labels = ADMIN_NAV.map((i) => i.label)
-    expect(labels).toEqual(['Dashboard', 'Vouchers', 'Resellers', 'Wallet', 'Analytics', 'Settings'])
+    expect(labels).toEqual(['Dashboard', 'Vouchers', 'Resellers', 'Wallet', 'Analytics', 'VCR Config', 'Settings'])
   })
 
   it('all hrefs start with /admin/', () => {
