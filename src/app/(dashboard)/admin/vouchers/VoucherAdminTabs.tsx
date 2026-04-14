@@ -200,13 +200,13 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(p)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg">
+                        <button onClick={() => openEdit(p)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(p.id, p.name)}
                           disabled={deletingId === p.id}
-                          className="p-2 hover:bg-red-50 text-red-500 rounded-lg disabled:opacity-50"
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg disabled:opacity-50"
                         >
                           {deletingId === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
@@ -362,7 +362,7 @@ function AllVouchers({
                 <option value="all">Semua Profile</option>
                 {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 shrink-0">Filter</button>
+              <button type="submit" className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-800 dark:hover:bg-white shrink-0">Filter</button>
               <div className="flex gap-2 shrink-0 ml-auto">
                 <button
                   type="button"
@@ -377,7 +377,7 @@ function AllVouchers({
                   type="button"
                   onClick={() => handleExport("excel")}
                   disabled={exporting === "excel"}
-                  className="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50 hover:bg-green-100 dark:hover:bg-green-900/40 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
                 >
                   {exporting === "excel" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                   <span className="hidden sm:inline">Excel</span>

@@ -7,7 +7,7 @@ export async function GET() {
   const { error } = await requireAdmin()
   if (error) return error
 
-  const client = createMikrotikClient()
+  const client = await createMikrotikClient()
   try {
     const conn = await client.connect()
     const profiles = await conn.menu("/ip/hotspot/user/profile").getAll()

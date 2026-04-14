@@ -47,7 +47,6 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
   const [mtProfiles, setMtProfiles] = useState<MikrotikProfile[]>([])
   const [mtLoading, setMtLoading] = useState(false)
   const [mtError, setMtError] = useState<string | null>(null)
-  const [mtFetched, setMtFetched] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -59,15 +58,13 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
   }, [open, initialData])
 
   const fetchMtProfiles = async () => {
-    if (mtFetched && mtProfiles.length > 0) return
     setMtLoading(true)
     setMtError(null)
     try {
-      const res = await fetch("/api/mikrotik/profiles")
+      const res = await fetch("/api/mikrotik/profiles", { cache: "no-store" })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Gagal mengambil profile")
       setMtProfiles(data.profiles ?? [])
-      setMtFetched(true)
     } catch (e: unknown) {
       setMtError(e instanceof Error ? e.message : "Gagal terhubung ke MikroTik")
     } finally {
@@ -190,7 +187,7 @@ export function ProfileModal({ open, onOpenChange, initialData, onSuccess }: Pro
               <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Profile MikroTik</label>
               <button
                 type="button"
-                onClick={() => { setMtFetched(false); fetchMtProfiles() }}
+                onClick={() => fetchMtProfiles()}
                 className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                 disabled={mtLoading}
               >

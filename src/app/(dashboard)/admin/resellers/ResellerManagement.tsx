@@ -157,7 +157,7 @@ function EditResellerDialog({
                   alt="Avatar"
                   width={64}
                   height={64}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600"
                 />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-2xl font-bold">
@@ -540,7 +540,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                             alt={r.name}
                             width={36}
                             height={36}
-                            className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                            className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-600 shrink-0"
                           />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
@@ -584,21 +584,21 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                           onClick={() => { setSelectedReseller(r); setTopupOpen(true) }}
                           title="Top Up Saldo"
                           disabled={r.is_frozen}
-                          className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="p-2 hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Wallet className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => { setSelectedReseller(r); setAssignOpen(true) }}
                           title="Assign Profil"
-                          className="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition-colors"
+                          className="p-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg transition-colors"
                         >
                           <ShieldCheck className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => { setSelectedReseller(r); setEditOpen(true) }}
                           title="Edit"
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
@@ -608,8 +608,8 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                           title={r.is_frozen ? "Unfreeze" : "Freeze"}
                           className={`p-2 rounded-lg transition-colors ${
                             r.is_frozen
-                              ? "hover:bg-green-50 text-green-600"
-                              : "hover:bg-blue-50 text-blue-600"
+                              ? "hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400"
+                              : "hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                           }`}
                         >
                           {freezeLoading === r.id ? (
@@ -645,7 +645,7 @@ export function ResellerManagement({ resellers: initialResellers, profiles }: Re
                         alt={r.name}
                         width={40}
                         height={40}
-                        className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 shrink-0"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold shrink-0">

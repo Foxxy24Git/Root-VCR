@@ -1,44 +1,50 @@
 import { RouterOSClient } from "routeros-client"
+import { prisma } from "@/lib/prisma"
 
 export interface MikrotikConfig {
   host: string
-  port: number        // tunnel/external port (MIKROTIK_PORT, e.g. 6904)
+  port: number        // tunnel/external port
   user: string
   password: string
   timeout: number     // seconds
 }
 
 /**
- * Baca konfigurasi MikroTik dari environment variables.
- * Throws jika variabel wajib tidak ada.
+ * Baca konfigurasi MikroTik dari database (settings table).
+ * Fallback ke environment variables jika DB kosong.
  */
-export function getMikrotikConfig(): MikrotikConfig {
-  const host     = process.env.MIKROTIK_HOST
-  const portStr  = process.env.MIKROTIK_PORT      // port tunnel/external
-  const user     = process.env.MIKROTIK_USER
-  const password = process.env.MIKROTIK_PASSWORD
+export async function getMikrotikConfig(): Promise<MikrotikConfig> {
+  const rows = await prisma.setting.findMany({
+    where: { key: { in: ["mikrotik_host", "mikrotik_api_port", "mikrotik_user", "mikrotik_pass"] } },
+  })
+
+  const get = (key: string): string | null => rows.find((r) => r.key === key)?.value ?? null
+
+  const host     = get("mikrotik_host")     || process.env.MIKROTIK_HOST     || null
+  const portStr  = get("mikrotik_api_port") || process.env.MIKROTIK_PORT     || null
+  const user     = get("mikrotik_user")     || process.env.MIKROTIK_USER     || null
+  const password = get("mikrotik_pass")     ?? process.env.MIKROTIK_PASSWORD ?? null
 
   if (!host)     throw new Error("MIKROTIK_HOST tidak dikonfigurasi")
   if (!portStr)  throw new Error("MIKROTIK_PORT tidak dikonfigurasi")
   if (!user)     throw new Error("MIKROTIK_USER tidak dikonfigurasi")
-  if (password === undefined || password === null)
-    throw new Error("MIKROTIK_PASSWORD tidak dikonfigurasi")
+  if (password === null) throw new Error("MIKROTIK_PASSWORD tidak dikonfigurasi")
 
   return {
     host,
     port: parseInt(portStr, 10),
     user,
     password,
-    timeout: parseInt(process.env.MIKROTIK_TIMEOUT ?? "10", 10),
+    timeout: 10,
   }
 }
 
 /**
- * Buat fresh RouterOSClient dari environment variables.
+ * Buat fresh RouterOSClient dari DB settings.
  * Setiap operasi pakai client baru agar tidak ada shared state.
  */
-export function createMikrotikClient(cfg?: MikrotikConfig): RouterOSClient {
-  const config = cfg ?? getMikrotikConfig()
+export async function createMikrotikClient(cfg?: MikrotikConfig): Promise<RouterOSClient> {
+  const config = cfg ?? await getMikrotikConfig()
   return new RouterOSClient({
     host:     config.host,
     port:     config.port,
@@ -51,26 +57,16 @@ export function createMikrotikClient(cfg?: MikrotikConfig): RouterOSClient {
 
 /**
  * Eksekusi satu operasi MikroTik dengan auto connect/disconnect.
- *
- * Menutup koneksi di `finally` sehingga tidak ada resource leak
- * bahkan jika `fn` melempar exception.
- *
- * Contoh:
- *   const users = await withMikrotik(api =>
- *     api.menu("/ip/hotspot/user").getAll()
- *   )
  */
 export async function withMikrotik<T>(
   fn: (api: ReturnType<RouterOSClient["api"]>) => Promise<T>
 ): Promise<T> {
-  const client = createMikrotikClient()
+  const client = await createMikrotikClient()
   const conn = await client.connect()
   try {
     return await fn(conn)
   } finally {
-    await client.disconnect().catch(() => {
-      // Abaikan error disconnect — koneksi mungkin sudah putus
-    })
+    await client.disconnect().catch(() => {})
   }
 }
 
@@ -84,14 +80,13 @@ export async function testMikrotikConnection(): Promise<{
   latencyMs?: number
 }> {
   const start = Date.now()
-  const client = createMikrotikClient()
   try {
+    const client = await createMikrotikClient()
     await client.connect()
     const latencyMs = Date.now() - start
     await client.disconnect().catch(() => {})
     return { ok: true, latencyMs }
   } catch (err) {
-    await client.disconnect().catch(() => {})
     const message = err instanceof Error ? err.message : String(err)
     return { ok: false, error: message }
   }

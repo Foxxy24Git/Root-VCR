@@ -76,7 +76,7 @@ export async function createHotspotUser(
     throw new Error("mikrotik_profile tidak dikonfigurasi pada profil ini")
   }
 
-  const client = createMikrotikClient()
+  const client = await createMikrotikClient()
   try {
     const conn = await client.connect()
     const result = await conn.menu("/ip/hotspot/user").add({

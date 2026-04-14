@@ -173,7 +173,7 @@ export default async function ResellerDashboard() {
                     <div key={v.id} className="p-4 flex items-center justify-between">
                       <div>
                         <p className="font-bold text-slate-900 dark:text-slate-100 tracking-wider">{v.code}</p>
-                        <p className="text-xs text-blue-600">{v.profile?.name ?? "-"}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">{v.profile?.name ?? "-"}</p>
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold mb-1 ${
