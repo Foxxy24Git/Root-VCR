@@ -5,6 +5,7 @@ import { WalletCard } from "@/components/cards/WalletCard"
 import { StatsCard } from "@/components/cards/StatsCard"
 import { Ticket, Users } from "lucide-react"
 import { GenerateVoucherForm } from "./GenerateVoucherForm"
+import { ActiveUsersCard } from "./ActiveUsersCard"
 import { calculateResellerPrice } from "@/lib/utils"
 import Link from "next/link"
 
@@ -191,6 +192,8 @@ export default async function ResellerDashboard() {
           </div>
         </div>
       </div>
+
+      <ActiveUsersCard />
     </div>
   )
 }

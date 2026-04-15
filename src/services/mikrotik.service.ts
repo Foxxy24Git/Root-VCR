@@ -1,5 +1,4 @@
-import { createMikrotikClient, testMikrotikConnection } from "@/lib/mikrotik"
-import { withMikrotik } from "@/lib/mikrotik"
+import { createMikrotikClient, testMikrotikConnection, withMikrotik } from "@/lib/mikrotik"
 
 export interface HotspotProfile {
   ".id": string
@@ -69,6 +68,33 @@ export async function getHotspotProfiles(): Promise<HotspotProfile[]> {
   return withMikrotik((api) =>
     api.menu("/ip/hotspot/user/profile").getAll() as Promise<HotspotProfile[]>
   )
+}
+
+export async function deleteHotspotProfile(profileId: string): Promise<{ success: boolean }> {
+  const client = await createMikrotikClient()
+  const conn = await client.connect()
+  try {
+    const profiles = (await conn.menu("/ip/hotspot/user/profile").getAll()) as Array<Record<string, string | undefined>>
+
+    const target = profiles.find((p) => p.id === profileId || p.name === profileId)
+
+    if (!target) {
+      throw new Error("Profile not found")
+    }
+
+    const targetId = target.id
+    if (!targetId) {
+      throw new Error("Profile ID not found")
+    }
+
+    console.log("REMOVING PROFILE ID:", targetId)
+    await conn.menu("/ip/hotspot/user/profile").remove(targetId)
+    console.log("PROFILE REMOVED:", targetId)
+
+    return { success: true }
+  } finally {
+    await client.disconnect().catch(() => {})
+  }
 }
 
 export async function createHotspotUser(
@@ -177,6 +203,85 @@ export async function deleteHotspotCookie(code: string): Promise<{ success: bool
     }
 
     return { success: true, removed: 1 }
+  } finally {
+    await client.disconnect().catch(() => {})
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Voucher Status Sync
+// ─────────────────────────────────────────────────────────────
+
+export interface VoucherSyncResult {
+  code: string
+  status: "unused" | "active" | "expired"
+  client_ip: string | null
+  client_mac: string | null
+}
+
+/**
+ * Pure MikroTik function — no DB access.
+ * Computes the correct status for each voucher based on
+ * /ip/hotspot/active and /ip/hotspot/cookie.
+ *
+ * Priority: ACTIVE > COOKIE > EXPIRED (used_at set) > UNUSED
+ */
+export async function computeVoucherStatuses(
+  vouchers: Array<{ code: string; used_at: Date | null }>
+): Promise<VoucherSyncResult[]> {
+  const client = await createMikrotikClient()
+  const conn = await client.connect()
+  try {
+    const [activeList, cookieList] = await Promise.all([
+      conn.menu("/ip/hotspot/active").getAll() as Promise<HotspotActive[]>,
+      conn.menu("/ip/hotspot/cookie").getAll() as Promise<HotspotCookie[]>,
+    ])
+
+    console.log("[computeVoucherStatuses] active:", activeList.length, "cookie:", cookieList.length)
+
+    // Build O(1) lookup maps — match by user OR name field
+    const activeMap = new Map<string, HotspotActive>()
+    for (const a of activeList) {
+      if (a.user) activeMap.set(a.user, a)
+      if (a.name && a.name !== a.user) activeMap.set(a.name, a)
+    }
+
+    const cookieMap = new Map<string, HotspotCookie>()
+    for (const c of cookieList) {
+      if (c.user) cookieMap.set(c.user, c)
+    }
+
+    return vouchers.map((v) => {
+      const active = activeMap.get(v.code)
+
+      if (active) {
+        console.log(`[computeVoucherStatuses] ${v.code} → active, ip=${active.address}`)
+        return {
+          code: v.code,
+          status: "active" as const,
+          client_ip: active.address ?? null,
+          client_mac: (active as Record<string, string | undefined>)["mac-address"] ?? null,
+        }
+      }
+
+      const cookie = cookieMap.get(v.code)
+      if (cookie) {
+        console.log(`[computeVoucherStatuses] ${v.code} → active (cookie)`)
+        return {
+          code: v.code,
+          status: "active" as const,
+          client_ip: (cookie as Record<string, string | undefined>)["address"] ?? null,
+          client_mac: null,
+        }
+      }
+
+      if (v.used_at !== null) {
+        console.log(`[computeVoucherStatuses] ${v.code} → expired`)
+        return { code: v.code, status: "expired" as const, client_ip: null, client_mac: null }
+      }
+
+      return { code: v.code, status: "unused" as const, client_ip: null, client_mac: null }
+    })
   } finally {
     await client.disconnect().catch(() => {})
   }

@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Filter, FileText, FileDown, Ticket } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Filter, FileText, FileDown, Ticket, RefreshCw } from "lucide-react"
 import { VoucherDetailModal, VoucherDetail } from "@/components/modals/VoucherDetailModal"
 import { EmptyState } from "@/components/shared/EmptyState"
 
@@ -15,9 +16,31 @@ export type SerializedVoucher = {
 interface VouchersClientProps { vouchers: SerializedVoucher[] }
 
 export function VouchersClient({ vouchers }: VouchersClientProps) {
+  const router = useRouter()
   const [selectedVoucher, setSelectedVoucher] = React.useState<VoucherDetail | null>(null)
   const [modalOpen, setModalOpen] = React.useState(false)
   const [exportLoading, setExportLoading] = React.useState<"excel" | "pdf" | null>(null)
+  const [syncing, setSyncing] = React.useState(false)
+
+  const syncAndRefresh = React.useCallback(async () => {
+    setSyncing(true)
+    try {
+      await fetch("/api/mikrotik/sync-vouchers", { method: "POST" })
+      router.refresh()
+    } catch (e) {
+      console.error("[VouchersClient] sync error:", e)
+    } finally {
+      setSyncing(false)
+    }
+  }, [router])
+
+  // Sync on mount, then auto-refresh DB every 30s
+  React.useEffect(() => {
+    syncAndRefresh()
+    const interval = setInterval(() => router.refresh(), 30_000)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleRowClick = (v: SerializedVoucher) => {
     setSelectedVoucher({
@@ -64,7 +87,16 @@ export function VouchersClient({ vouchers }: VouchersClientProps) {
   return (
     <>
       {/* Export Bar */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-end gap-2 bg-slate-50/30 dark:bg-slate-900/20">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center gap-2 bg-slate-50/30 dark:bg-slate-900/20">
+        <button
+          onClick={syncAndRefresh}
+          disabled={syncing}
+          className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+          {syncing ? "Syncing..." : "Sync Status"}
+        </button>
+        <div className="flex gap-2">
         <button onClick={() => handleExport("pdf")} disabled={exportLoading !== null}
           className="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm disabled:opacity-60">
           <FileDown className="w-4 h-4" />
@@ -75,6 +107,7 @@ export function VouchersClient({ vouchers }: VouchersClientProps) {
           <FileText className="w-4 h-4" />
           {exportLoading === "excel" ? "Downloading..." : "Excel"}
         </button>
+        </div>
       </div>
 
       {/* Table (Desktop) */}

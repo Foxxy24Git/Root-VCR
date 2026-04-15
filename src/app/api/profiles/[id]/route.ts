@@ -57,21 +57,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const existing = await prisma.profile.findUnique({ where: { id: params.id } })
   if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
-  // Cek apakah ada voucher yang pakai profile ini
-  const voucherCount = await prisma.voucher.count({ where: { profile_id: params.id } })
-  if (voucherCount > 0) {
-    // Soft-delete: nonaktifkan saja
-    const profile = await prisma.profile.update({
-      where: { id: params.id },
-      data: { is_active: false },
-      select: { id: true, name: true, is_active: true },
-    })
-    return NextResponse.json({
-      profile,
-      message: `Profile dinonaktifkan (memiliki ${voucherCount} voucher terkait)`,
-    })
-  }
-
   await prisma.profile.delete({ where: { id: params.id } })
   return NextResponse.json({ message: "Profile berhasil dihapus" })
 }

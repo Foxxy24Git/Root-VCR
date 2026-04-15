@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { ProfileModal, ProfileInput } from "@/components/modals/ProfileModal"
 import { VoucherDetailModal, VoucherDetail } from "@/components/modals/VoucherDetailModal"
@@ -61,6 +61,7 @@ interface VoucherAdminTabsProps {
 function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [editProfile, setEditProfile] = useState<ProfileInput | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -84,15 +85,34 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
     }
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Hapus profile "${name}"? Voucher yang sudah dibuat tetap ada.`)) return
-    setDeletingId(id)
+  const handleDelete = async (profile: Profile) => {
+    if (!confirm(`Hapus profile "${profile.name}"? Voucher yang sudah dibuat tetap ada.`)) return
+    setDeletingId(profile.id)
     try {
-      const res = await fetch(`/api/profiles/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Gagal menghapus")
-      refresh()
-    } catch {
-      alert("Gagal menghapus profile")
+      console.log("DELETE REQUEST ID:", profile.id, "mikrotik_profile:", profile.mikrotik_profile)
+
+      // Delete from DB
+      const dbRes = await fetch(`/api/profiles/${profile.id}`, { method: "DELETE" })
+      if (!dbRes.ok) {
+        const data = await dbRes.json()
+        throw new Error(data.error || "Gagal menghapus dari database")
+      }
+
+      // Delete from MikroTik (best-effort, non-blocking on error)
+      try {
+        const mtRes = await fetch(
+          `/api/mikrotik/profiles?profileId=${encodeURIComponent(profile.mikrotik_profile)}`,
+          { method: "DELETE" }
+        )
+        console.log("MIKROTIK DELETE STATUS:", mtRes.status)
+      } catch (mtErr) {
+        console.warn("MikroTik delete warning:", mtErr)
+      }
+
+      // Remove from local state immediately — no router.refresh()
+      setProfiles((prev) => prev.filter((p) => p.id !== profile.id))
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Gagal menghapus profile")
     } finally {
       setDeletingId(null)
     }
@@ -162,7 +182,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {initialProfiles.length === 0 ? (
+              {profiles.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                     <Zap className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
@@ -170,7 +190,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                   </td>
                 </tr>
               ) : (
-                initialProfiles.map(p => (
+                profiles.map(p => (
                   <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{p.name}</p>
@@ -204,7 +224,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(p.id, p.name)}
+                          onClick={() => handleDelete(p)}
                           disabled={deletingId === p.id}
                           className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg disabled:opacity-50"
                         >
@@ -221,7 +241,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
 
         {/* Mobile cards */}
         <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
-          {initialProfiles.map(p => (
+          {profiles.map(p => (
             <div key={p.id} className="p-4">
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -239,7 +259,7 @@ function ProfileManagement({ initialProfiles }: { initialProfiles: Profile[] }) 
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => openEdit(p)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => handleDelete(p.id, p.name)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => handleDelete(p)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </div>
@@ -283,6 +303,27 @@ function AllVouchers({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null)
+  const [syncing, setSyncing] = useState(false)
+
+  const syncAndRefresh = useCallback(async () => {
+    setSyncing(true)
+    try {
+      await fetch("/api/mikrotik/sync-vouchers", { method: "POST" })
+      startTransition(() => router.refresh())
+    } catch (e) {
+      console.error("[AllVouchers] sync error:", e)
+    } finally {
+      setSyncing(false)
+    }
+  }, [router, startTransition])
+
+  // Sync on mount, auto-refresh DB every 30s
+  useEffect(() => {
+    syncAndRefresh()
+    const interval = setInterval(() => startTransition(() => router.refresh()), 30_000)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const buildHref = (overrides: Record<string, string>) => {
     const params = new URLSearchParams({
@@ -366,6 +407,15 @@ function AllVouchers({
               <div className="flex gap-2 shrink-0 ml-auto">
                 <button
                   type="button"
+                  onClick={syncAndRefresh}
+                  disabled={syncing}
+                  className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync Status"}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleExport("pdf")}
                   disabled={exporting === "pdf"}
                   className="flex items-center gap-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
@@ -397,13 +447,14 @@ function AllVouchers({
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Profile</th>
                 <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Generated</th>
                 <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-xs">Status</th>
+                <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Client IP</th>
                 <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider text-xs">Harga</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {vouchers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-14 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={7} className="px-6 py-14 text-center text-slate-500 dark:text-slate-400">
                     <Filter className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                     <p className="font-medium text-slate-900 dark:text-slate-100">Tidak ada voucher</p>
                   </td>
@@ -430,6 +481,9 @@ function AllVouchers({
                       }`}>
                         {v.status.toUpperCase()}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-400">
+                      {v.client_ip ?? "-"}
                     </td>
                     <td className="px-6 py-4 text-right font-medium text-slate-900 dark:text-slate-100">
                       Rp {v.price_charged.toLocaleString("id-ID")}
@@ -460,6 +514,9 @@ function AllVouchers({
                 <span>{new Date(v.generated_at).toLocaleDateString("id-ID")}</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">Rp {v.price_charged.toLocaleString("id-ID")}</span>
               </div>
+              {v.client_ip && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">IP: {v.client_ip}</p>
+              )}
             </div>
           ))}
         </div>
