@@ -396,6 +396,7 @@ function AllVouchers({
                 <option value="all">Semua Status</option>
                 <option value="unused">Unused</option>
                 <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
                 <option value="expired">Expired</option>
                 <option value="deleted">Deleted</option>
               </select>
@@ -474,9 +475,10 @@ function AllVouchers({
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                        v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                        v.status === "expired" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                        v.status === "active"   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                        v.status === "inactive" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                        v.status === "unused"   ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                        v.status === "expired"  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
                         "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                       }`}>
                         {v.status.toUpperCase()}
@@ -505,9 +507,11 @@ function AllVouchers({
                   <p className="text-xs text-blue-600 dark:text-blue-400">{v.profile_name ?? "-"} • {v.user_name ?? "-"}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  v.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                  v.status === "unused" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                  "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  v.status === "active"   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                  v.status === "inactive" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                  v.status === "unused"   ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                  v.status === "expired"  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                  "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                 }`}>{v.status.toUpperCase()}</span>
               </div>
               <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">

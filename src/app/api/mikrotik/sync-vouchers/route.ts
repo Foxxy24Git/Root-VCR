@@ -26,9 +26,7 @@ export async function POST() {
 
   let syncResults
   try {
-    syncResults = await computeVoucherStatuses(
-      vouchers.map((v) => ({ code: v.code, used_at: v.used_at }))
-    )
+    syncResults = await computeVoucherStatuses(vouchers.map((v) => ({ code: v.code })))
   } catch (e) {
     console.error("[sync-vouchers] MikroTik error:", e)
     return NextResponse.json({ error: "Gagal terhubung ke MikroTik" }, { status: 503 })
@@ -60,7 +58,7 @@ export async function POST() {
                   ...(!v.used_at ? { used_at: now } : {}),
                 }
               : {}),
-            // When expired: keep existing client_ip (last known), do not overwrite
+            // When inactive/expired: preserve existing client_ip (last known), no overwrites
           },
         })
       })

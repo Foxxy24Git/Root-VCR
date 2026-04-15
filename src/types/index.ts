@@ -1,6 +1,6 @@
 export type Role = "admin" | "reseller"
 
-export type VoucherStatus = "unused" | "active" | "expired" | "deleted"
+export type VoucherStatus = "unused" | "active" | "inactive" | "expired" | "deleted"
 
 export type WalletLogType = "topup" | "deduct" | "generate" | "refund" | "adjustment"
 

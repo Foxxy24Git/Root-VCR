@@ -214,73 +214,106 @@ export async function deleteHotspotCookie(code: string): Promise<{ success: bool
 
 export interface VoucherSyncResult {
   code: string
-  status: "unused" | "active" | "expired"
+  status: "unused" | "active" | "inactive" | "expired"
   client_ip: string | null
   client_mac: string | null
+}
+
+export interface VoucherSyncInput {
+  code: string
+}
+
+/**
+ * Parse RouterOS uptime/limit-uptime string (e.g. "1d2h30m10s", "45m", "3600s")
+ * into total seconds. Returns 0 for empty or unparseable input.
+ */
+function parseUptime(str: string | undefined): number {
+  if (!str || str === "0s" || str === "") return 0
+
+  let total = 0
+  const d = str.match(/(\d+)d/)
+  const h = str.match(/(\d+)h/)
+  const m = str.match(/(\d+)m/)
+  const s = str.match(/(\d+)s/)
+
+  if (d) total += parseInt(d[1]) * 86400
+  if (h) total += parseInt(h[1]) * 3600
+  if (m) total += parseInt(m[1]) * 60
+  if (s) total += parseInt(s[1])
+
+  return total
 }
 
 /**
  * Pure MikroTik function — no DB access.
  * Computes the correct status for each voucher based on
- * /ip/hotspot/active and /ip/hotspot/cookie.
+ * /ip/hotspot/active and /ip/hotspot/user (uptime + limit-uptime).
  *
- * Priority: ACTIVE > COOKIE > EXPIRED (used_at set) > UNUSED
+ * Priority:
+ *   1. ACTIVE   — found in /ip/hotspot/active (realtime)
+ *   2. UNUSED   — user not in /ip/hotspot/user OR uptime == 0 (never logged in)
+ *   3. EXPIRED  — limit-uptime > 0 AND uptime >= limit-uptime
+ *   4. INACTIVE — has uptime but not expired yet (offline, valid)
  */
 export async function computeVoucherStatuses(
-  vouchers: Array<{ code: string; used_at: Date | null }>
+  vouchers: VoucherSyncInput[]
 ): Promise<VoucherSyncResult[]> {
   const client = await createMikrotikClient()
   const conn = await client.connect()
   try {
-    const [activeList, cookieList] = await Promise.all([
+    const [activeList, userList] = await Promise.all([
       conn.menu("/ip/hotspot/active").getAll() as Promise<HotspotActive[]>,
-      conn.menu("/ip/hotspot/cookie").getAll() as Promise<HotspotCookie[]>,
+      conn.menu("/ip/hotspot/user").getAll() as Promise<HotspotUser[]>,
     ])
 
-    console.log("[computeVoucherStatuses] active:", activeList.length, "cookie:", cookieList.length)
+    console.log("[computeVoucherStatuses] active:", activeList.length, "user:", userList.length)
 
-    // Build O(1) lookup maps — match by user OR name field
+    // Build O(1) lookup maps
     const activeMap = new Map<string, HotspotActive>()
     for (const a of activeList) {
       if (a.user) activeMap.set(a.user, a)
       if (a.name && a.name !== a.user) activeMap.set(a.name, a)
     }
 
-    const cookieMap = new Map<string, HotspotCookie>()
-    for (const c of cookieList) {
-      if (c.user) cookieMap.set(c.user, c)
+    const userMap = new Map<string, Record<string, string | undefined>>()
+    for (const u of userList) {
+      if (u.name) userMap.set(u.name, u as Record<string, string | undefined>)
     }
 
     return vouchers.map((v) => {
+      // 1. ACTIVE — highest priority
       const active = activeMap.get(v.code)
-
       if (active) {
         console.log(`[computeVoucherStatuses] ${v.code} → active, ip=${active.address}`)
         return {
           code: v.code,
           status: "active" as const,
           client_ip: active.address ?? null,
-          client_mac: (active as Record<string, string | undefined>)["mac-address"] ?? null,
+          client_mac: active["mac-address"] ?? null,
         }
       }
 
-      const cookie = cookieMap.get(v.code)
-      if (cookie) {
-        console.log(`[computeVoucherStatuses] ${v.code} → active (cookie)`)
-        return {
-          code: v.code,
-          status: "active" as const,
-          client_ip: (cookie as Record<string, string | undefined>)["address"] ?? null,
-          client_mac: null,
-        }
+      const userMt = userMap.get(v.code)
+      const uptimeSeconds = parseUptime(userMt?.["uptime"])
+      const limitSeconds  = parseUptime(userMt?.["limit-uptime"])
+
+      console.log(`[computeVoucherStatuses] ${v.code} uptime="${userMt?.["uptime"]}" limit="${userMt?.["limit-uptime"]}" uptimeSec=${uptimeSeconds} limitSec=${limitSeconds}`)
+
+      // 2. UNUSED — never logged in
+      if (!userMt || uptimeSeconds === 0) {
+        console.log(`[computeVoucherStatuses] ${v.code} → unused`)
+        return { code: v.code, status: "unused" as const, client_ip: null, client_mac: null }
       }
 
-      if (v.used_at !== null) {
-        console.log(`[computeVoucherStatuses] ${v.code} → expired`)
+      // 3. EXPIRED — used up all quota
+      if (limitSeconds > 0 && uptimeSeconds >= limitSeconds) {
+        console.log(`[computeVoucherStatuses] ${v.code} → expired (${uptimeSeconds}s >= ${limitSeconds}s)`)
         return { code: v.code, status: "expired" as const, client_ip: null, client_mac: null }
       }
 
-      return { code: v.code, status: "unused" as const, client_ip: null, client_mac: null }
+      // 4. INACTIVE — logged in before, quota remaining, currently offline
+      console.log(`[computeVoucherStatuses] ${v.code} → inactive (${uptimeSeconds}s used of ${limitSeconds}s)`)
+      return { code: v.code, status: "inactive" as const, client_ip: null, client_mac: null }
     })
   } finally {
     await client.disconnect().catch(() => {})

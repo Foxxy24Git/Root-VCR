@@ -39,6 +39,7 @@ export default async function VoucherManagementPage({
     whereCondition.status = statusFilter as
       | "unused"
       | "active"
+      | "inactive"
       | "expired"
       | "deleted"
   }
@@ -124,6 +125,7 @@ export default async function VoucherManagementPage({
                 <option value="all">Semua Status</option>
                 <option value="unused">Unused</option>
                 <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
                 <option value="expired">Expired</option>
               </select>
               <select

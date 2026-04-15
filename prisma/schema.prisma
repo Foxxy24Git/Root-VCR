@@ -19,6 +19,7 @@ enum Role {
 enum VoucherStatus {
   unused
   active
+  inactive
   expired
   deleted
 }
