@@ -15,11 +15,19 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    await deleteHotspotCookie(voucher.code)
-    return NextResponse.json({ message: "Cookie berhasil dihapus dari MikroTik" })
-  } catch {
+    const result = await deleteHotspotCookie(voucher.code)
+    console.log(`[API] delete cookie voucher code="${voucher.code}" result=`, result)
+    return NextResponse.json({
+      success: result.success,
+      removed: result.removed,
+      message: result.success
+        ? `${result.removed} cookie berhasil dihapus dari MikroTik`
+        : "Tidak ada cookie ditemukan",
+    })
+  } catch (err) {
+    console.error(`[API] delete cookie error:`, err)
     return NextResponse.json(
-      { error: "Gagal menghapus cookie dari MikroTik" },
+      { success: false, error: "Gagal menghapus cookie dari MikroTik" },
       { status: 503 }
     )
   }

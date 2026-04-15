@@ -18,16 +18,20 @@ export interface HotspotUser {
 }
 
 export interface HotspotActive {
-  ".id": string
+  ".id"?: string
+  id?: string
   user: string
+  name?: string
   address?: string
   "uptime"?: string
   [key: string]: string | undefined
 }
 
 export interface HotspotCookie {
-  ".id": string
+  ".id"?: string
+  id?: string
   user: string
+  name?: string
   [key: string]: string | undefined
 }
 
@@ -116,30 +120,64 @@ export async function deleteUser(code: string): Promise<void> {
   })
 }
 
-export async function logoutHotspotUser(code: string): Promise<void> {
-  await withMikrotik(async (api) => {
-    const sessions = (await api
-      .menu("/ip/hotspot/active")
-      .where("user", code)
-      .getAll()) as HotspotActive[]
+export async function logoutHotspotUser(code: string): Promise<{ success: boolean; removed: number }> {
+  const client = await createMikrotikClient()
+  const conn = await client.connect()
+  try {
+    console.log(`[MIKROTIK] logoutHotspotUser: START code="${code}"`)
 
-    for (const s of sessions) {
-      const id = s[".id"]
-      if (id) await api.menu("/ip/hotspot/active").where(".id", id).remove()
+    const activeList = (await conn.menu("/ip/hotspot/active").getAll()) as HotspotActive[]
+    console.log("ACTIVE LIST:", JSON.stringify(activeList))
+
+    const activeTarget = activeList.find((item) => item.user === code || item.name === code)
+
+    if (!activeTarget) {
+      console.log("ACTIVE NOT FOUND:", code)
+      return { success: false, removed: 0 }
     }
-  })
+
+    const activeId = activeTarget.id ?? activeTarget[".id"]
+    if (activeId) {
+      console.log("REMOVING ID:", activeId)
+      await conn.menu("/ip/hotspot/active").remove(activeId)
+      console.log("ACTIVE REMOVED:", activeId)
+    } else {
+      console.log("ACTIVE NO ID:", JSON.stringify(activeTarget))
+    }
+
+    return { success: true, removed: 1 }
+  } finally {
+    await client.disconnect().catch(() => {})
+  }
 }
 
-export async function deleteHotspotCookie(code: string): Promise<void> {
-  await withMikrotik(async (api) => {
-    const cookies = (await api
-      .menu("/ip/hotspot/cookie")
-      .where("user", code)
-      .getAll()) as HotspotCookie[]
+export async function deleteHotspotCookie(code: string): Promise<{ success: boolean; removed: number }> {
+  const client = await createMikrotikClient()
+  const conn = await client.connect()
+  try {
+    console.log(`[MIKROTIK] deleteHotspotCookie: START code="${code}"`)
 
-    for (const c of cookies) {
-      const id = c[".id"]
-      if (id) await api.menu("/ip/hotspot/cookie").where(".id", id).remove()
+    const cookieList = (await conn.menu("/ip/hotspot/cookie").getAll()) as HotspotCookie[]
+    console.log("COOKIE LIST:", JSON.stringify(cookieList))
+
+    const cookieTarget = cookieList.find((item) => item.user === code || item.name === code)
+
+    if (!cookieTarget) {
+      console.log("COOKIE NOT FOUND:", code)
+      return { success: false, removed: 0 }
     }
-  })
+
+    const cookieId = cookieTarget.id ?? cookieTarget[".id"]
+    if (cookieId) {
+      console.log("REMOVING ID:", cookieId)
+      await conn.menu("/ip/hotspot/cookie").remove(cookieId)
+      console.log("COOKIE REMOVED:", cookieId)
+    } else {
+      console.log("COOKIE NO ID:", JSON.stringify(cookieTarget))
+    }
+
+    return { success: true, removed: 1 }
+  } finally {
+    await client.disconnect().catch(() => {})
+  }
 }

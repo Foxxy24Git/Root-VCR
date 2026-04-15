@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
-import { logoutHotspotUser } from "@/services/mikrotik.service"
+import { logoutHotspotUser, deleteHotspotCookie } from "@/services/mikrotik.service"
 
 type Params = { params: { id: string } }
 
@@ -15,11 +15,26 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    await logoutHotspotUser(voucher.code)
-    return NextResponse.json({ message: "Sesi aktif berhasil di-logout dari MikroTik" })
-  } catch {
+    console.log(`[API] logout voucher id="${params.id}" code="${voucher.code}" — calling logoutHotspotUser`)
+    const result = await logoutHotspotUser(voucher.code)
+    console.log(`[API] logout voucher code="${voucher.code}" result=`, result)
+
+    try {
+      console.log(`[API] logout voucher code="${voucher.code}" — calling deleteHotspotCookie`)
+      const cookieResult = await deleteHotspotCookie(voucher.code)
+      console.log(`[API] delete cookie voucher code="${voucher.code}" result=`, cookieResult)
+    } catch (cookieErr) {
+      console.warn(`[API] delete cookie failed (non-fatal):`, cookieErr)
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Voucher logged out",
+    })
+  } catch (err) {
+    console.error(`[API] logout error:`, err)
     return NextResponse.json(
-      { error: "Gagal logout sesi dari MikroTik" },
+      { success: false, error: "Gagal logout sesi dari MikroTik" },
       { status: 503 }
     )
   }
