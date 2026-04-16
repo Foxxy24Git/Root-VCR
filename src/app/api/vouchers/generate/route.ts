@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
           select: {
             id: true, code: true, status: true, price_charged: true,
             generated_at: true, mikrotik_synced: true,
-            profile: { select: { name: true, duration_days: true } },
+            profile: { select: { name: true, duration_days: true, duration_hours: true } },
           },
         })
       )
