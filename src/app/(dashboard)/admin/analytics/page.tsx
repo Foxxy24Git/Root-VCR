@@ -59,7 +59,7 @@ export default async function AdminAnalyticsPage() {
     }),
     prisma.voucher.groupBy({
       by: ["profile_id"],
-      where: { generated_at: { gte: sevenDaysAgo } },
+      where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
       take: 6,
