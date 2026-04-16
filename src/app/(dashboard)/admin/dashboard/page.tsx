@@ -136,11 +136,24 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 gap-y-4">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Kolom kiri: chart + cetak voucher stacked langsung */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
           <AdminRevenueChart data={trendData} />
+
+          {/* Cetak Voucher — Admin Only */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6">
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">Cetak Voucher</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Generate voucher tanpa potong saldo — tidak masuk laporan keuangan.
+            </p>
+            <div className="max-w-md mx-auto">
+              <AdminPrintVoucherForm profiles={activeProfiles} />
+            </div>
+          </div>
         </div>
 
+        {/* Kolom kanan: sidebar */}
         <div className="space-y-6">
           {/* Top Resellers */}
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
@@ -199,19 +212,6 @@ export default async function AdminDashboardPage() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Cetak Voucher — Admin Only, kiri sejajar chart */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6">
-            <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">Cetak Voucher</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Generate voucher tanpa potong saldo — tidak masuk laporan keuangan.
-            </p>
-            <div className="max-w-md mx-auto">
-              <AdminPrintVoucherForm profiles={activeProfiles} />
-            </div>
           </div>
         </div>
       </div>
