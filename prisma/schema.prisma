@@ -24,6 +24,11 @@ enum VoucherStatus {
   deleted
 }
 
+enum VoucherSource {
+  ADMIN
+  RESELLER
+}
+
 enum WalletLogType {
   topup
   deduct
@@ -98,6 +103,7 @@ model Voucher {
   client_ip       String?       @db.VarChar(45)
   client_mac      String?       @db.VarChar(17)
   mikrotik_synced Boolean       @default(false)
+  source          VoucherSource @default(RESELLER)
   created_at      DateTime      @default(now())
 
   user    User?    @relation(fields: [user_id], references: [id])
