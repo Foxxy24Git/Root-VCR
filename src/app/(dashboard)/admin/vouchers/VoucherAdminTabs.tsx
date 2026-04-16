@@ -54,6 +54,7 @@ interface VoucherAdminTabsProps {
   searchFilter?: string
   statusFilter?: string
   profileFilter?: string
+  initialTab?: "profiles" | "vouchers" | "pppoe"
 }
 
 // ── Profile Management Tab ───────────────────────────────────────────────────
@@ -673,8 +674,9 @@ export function VoucherAdminTabs({
   searchFilter,
   statusFilter,
   profileFilter,
+  initialTab = "vouchers",
 }: VoucherAdminTabsProps) {
-  const [activeTab, setActiveTab] = useState<"profiles" | "vouchers" | "pppoe">("profiles")
+  const [activeTab, setActiveTab] = useState<"profiles" | "vouchers" | "pppoe">(initialTab)
 
   const tabs = [
     { id: "profiles", label: "Profile Management", icon: <Zap className="w-4 h-4" /> },

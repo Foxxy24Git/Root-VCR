@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stagger">
-        <Link href="/admin/vouchers?date=today" className="block animate-slide-up">
+        <Link href="/voucher/semua" className="block animate-slide-up hover:scale-[1.02] transition-transform">
           <StatsCard
             title="Voucher (Hari Ini)"
             value={vouchersToday.toLocaleString("id-ID")}

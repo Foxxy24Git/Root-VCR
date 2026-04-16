@@ -89,7 +89,7 @@ export default async function ResellerDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <WalletCard balance={balance} />
 
-        <Link href="/reseller/vouchers" className="block">
+        <Link href="/voucher/semua" className="block hover:scale-[1.02] transition-transform">
           <StatsCard
             title="VCR Generated Today"
             value={todayVouchers}

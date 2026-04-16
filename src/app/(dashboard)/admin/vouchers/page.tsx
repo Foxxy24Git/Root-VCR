@@ -25,6 +25,7 @@ export default async function AdminVouchersPage({
   const statusFilter = sp.status
   const searchFilter = sp.search
   const profileFilter = sp.profileId
+  const initialTab = (sp.tab === "profiles" || sp.tab === "pppoe") ? sp.tab : "vouchers"
 
   // Build voucher filter
   const whereCondition: Prisma.VoucherWhereInput = {}
@@ -102,6 +103,7 @@ export default async function AdminVouchersPage({
         searchFilter={searchFilter}
         statusFilter={statusFilter}
         profileFilter={profileFilter}
+        initialTab={initialTab}
       />
     </div>
   )
