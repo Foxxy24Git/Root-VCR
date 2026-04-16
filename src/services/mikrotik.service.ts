@@ -245,15 +245,40 @@ function parseUptime(str: string | undefined): number {
 }
 
 /**
+ * Parses a Mikhmon comment date string (expire time) into a Date.
+ * Mikhmon writes the expire time as: "jan/dd/yyyy hh:mm:ss"
+ * Returns null if the comment doesn't match this format.
+ */
+function parseMikrotikDate(str?: string): Date | null {
+  if (!str) return null
+  try {
+    const months: Record<string, number> = {
+      jan:0, feb:1, mar:2, apr:3, may:4, jun:5,
+      jul:6, aug:7, sep:8, oct:9, nov:10, dec:11,
+    }
+    const parts = str.trim().split(' ')
+    if (parts.length < 2) return null
+    const [datePart, timePart] = parts
+    const [mon, day, year] = datePart.split('/')
+    const month = months[mon?.toLowerCase()]
+    if (month === undefined) return null
+    const [h, m, s] = timePart.split(':').map(Number)
+    return new Date(Number(year), month, Number(day), h, m, s)
+  } catch {
+    return null
+  }
+}
+
+/**
  * Pure MikroTik function — no DB access.
  * Computes the correct status for each voucher based on
- * /ip/hotspot/active and /ip/hotspot/user (uptime + limit-uptime).
+ * /ip/hotspot/active and /ip/hotspot/user (comment = expire time from Mikhmon).
  *
  * Priority:
  *   1. ACTIVE   — found in /ip/hotspot/active (realtime)
- *   2. UNUSED   — user not in /ip/hotspot/user OR uptime == 0 (never logged in)
- *   3. EXPIRED  — limit-uptime > 0 AND uptime >= limit-uptime
- *   4. INACTIVE — has uptime but not expired yet (offline, valid)
+ *   2. EXPIRED  — comment parses to a date AND now > that date
+ *   3. UNUSED   — no user record OR uptime == 0 (never logged in)
+ *   4. INACTIVE — logged in before, currently offline, not expired
  */
 export async function computeVoucherStatuses(
   vouchers: VoucherSyncInput[]
@@ -280,6 +305,8 @@ export async function computeVoucherStatuses(
       if (u.name) userMap.set(u.name, u as Record<string, string | undefined>)
     }
 
+    const now = new Date()
+
     return vouchers.map((v) => {
       // 1. ACTIVE — highest priority
       const active = activeMap.get(v.code)
@@ -295,24 +322,25 @@ export async function computeVoucherStatuses(
 
       const userMt = userMap.get(v.code)
       const uptimeSeconds = parseUptime(userMt?.["uptime"])
-      const limitSeconds  = parseUptime(userMt?.["limit-uptime"])
+      const comment = userMt?.["comment"]
+      const expireTime = parseMikrotikDate(comment)
 
-      console.log(`[computeVoucherStatuses] ${v.code} uptime="${userMt?.["uptime"]}" limit="${userMt?.["limit-uptime"]}" uptimeSec=${uptimeSeconds} limitSec=${limitSeconds}`)
+      console.log(`[computeVoucherStatuses] ${v.code} comment="${comment}" expireTime=${expireTime?.toISOString() ?? "null"}`)
 
-      // 2. UNUSED — never logged in
+      // 2. EXPIRED — comment is Mikhmon expire date and it's in the past
+      if (expireTime && now > expireTime) {
+        console.log(`[computeVoucherStatuses] ${v.code} → expired (expire=${expireTime.toISOString()})`)
+        return { code: v.code, status: "expired" as const, client_ip: null, client_mac: null }
+      }
+
+      // 3. UNUSED — never logged in
       if (!userMt || uptimeSeconds === 0) {
         console.log(`[computeVoucherStatuses] ${v.code} → unused`)
         return { code: v.code, status: "unused" as const, client_ip: null, client_mac: null }
       }
 
-      // 3. EXPIRED — used up all quota
-      if (limitSeconds > 0 && uptimeSeconds >= limitSeconds) {
-        console.log(`[computeVoucherStatuses] ${v.code} → expired (${uptimeSeconds}s >= ${limitSeconds}s)`)
-        return { code: v.code, status: "expired" as const, client_ip: null, client_mac: null }
-      }
-
-      // 4. INACTIVE — logged in before, quota remaining, currently offline
-      console.log(`[computeVoucherStatuses] ${v.code} → inactive (${uptimeSeconds}s used of ${limitSeconds}s)`)
+      // 4. INACTIVE — logged in before, currently offline, not expired
+      console.log(`[computeVoucherStatuses] ${v.code} → inactive (${uptimeSeconds}s used)`)
       return { code: v.code, status: "inactive" as const, client_ip: null, client_mac: null }
     })
   } finally {
