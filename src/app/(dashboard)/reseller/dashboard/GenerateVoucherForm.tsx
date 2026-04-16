@@ -57,8 +57,9 @@ export function GenerateVoucherForm({ availableProfiles, currentBalance }: Gener
       }
 
       // Map response to our modal format
-      const vouchersForModal = data.vouchers.map((v: { code: string; profile: { name: string; duration_days: number; duration_hours: number } }) => ({
+      const vouchersForModal = data.vouchers.map((v: { code: string; password?: string | null; profile: { name: string; duration_days: number; duration_hours: number } }) => ({
         code: v.code,
+        password: v.password ?? null,
         profileName: v.profile.name,
         durationDays: v.profile.duration_days * 24 + v.profile.duration_hours,
       }))

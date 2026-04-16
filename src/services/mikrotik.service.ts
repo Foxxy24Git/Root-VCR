@@ -293,25 +293,31 @@ export async function computeVoucherStatuses(
 
     console.log("[computeVoucherStatuses] active:", activeList.length, "user:", userList.length)
 
-    // Build O(1) lookup maps
+    // Build O(1) lookup maps (stringify keys — routeros-client may return numbers at runtime)
     const activeMap = new Map<string, HotspotActive>()
     for (const a of activeList) {
-      if (a.user) activeMap.set(a.user, a)
-      if (a.name && a.name !== a.user) activeMap.set(a.name, a)
+      const user = String(a.user ?? "")
+      const name = String(a.name ?? "")
+      if (user) activeMap.set(user, a)
+      if (name && name !== user) activeMap.set(name, a)
     }
 
     const userMap = new Map<string, Record<string, string | undefined>>()
     for (const u of userList) {
-      if (u.name) userMap.set(u.name, u as Record<string, string | undefined>)
+      // Stringify to handle routeros-client returning numeric names as JS numbers at runtime
+      const name = String(u.name ?? "")
+      if (name) userMap.set(name, u as Record<string, string | undefined>)
     }
 
     const now = new Date()
 
     return vouchers.map((v) => {
+      const codeStr = String(v.code)
+
       // 1. ACTIVE — highest priority
-      const active = activeMap.get(v.code)
+      const active = activeMap.get(codeStr)
       if (active) {
-        console.log(`[computeVoucherStatuses] ${v.code} → active, ip=${active.address}`)
+        console.log(`[computeVoucherStatuses] ${codeStr} → active, ip=${active.address}`)
         return {
           code: v.code,
           status: "active" as const,
@@ -320,7 +326,7 @@ export async function computeVoucherStatuses(
         }
       }
 
-      const userMt = userMap.get(v.code)
+      const userMt = userMap.get(codeStr)
       const uptimeSeconds = parseUptime(userMt?.["uptime"])
       const comment = userMt?.["comment"]
       const expireTime = parseMikrotikDate(comment)

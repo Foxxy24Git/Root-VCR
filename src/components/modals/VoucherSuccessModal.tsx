@@ -11,6 +11,7 @@ export interface VoucherGeneratedData {
   code: string
   profileName: string
   durationDays: number
+  password?: string | null
 }
 
 interface VoucherSuccessModalProps {
@@ -26,9 +27,13 @@ export function VoucherSuccessModal({
 }: VoucherSuccessModalProps) {
   const voucher = vouchers[0]
 
+  const hasPassword = voucher?.password != null
+
   const handleCopy = async () => {
     if (!voucher) return
-    const text = `Kode: ${voucher.code}\nProfile: ${voucher.profileName}`
+    const text = hasPassword
+      ? `Username: ${voucher.code}\nPassword: ${voucher.password}\nProfile: ${voucher.profileName}`
+      : `Kode: ${voucher.code}\nProfile: ${voucher.profileName}`
     try {
       await navigator.clipboard.writeText(text)
       alert("Kode voucher disalin!")
@@ -39,7 +44,10 @@ export function VoucherSuccessModal({
 
   const handleShareWhatsApp = () => {
     if (!voucher) return
-    const text = `🎫 VOUCHER WIFI ROOT.VCR\n━━━━━━━━━━━━━━━━━━━━━━\nKode: ${voucher.code}\nProfile: ${voucher.profileName}\nMasa Aktif: ${voucher.durationDays} Jam\n\n📶 Login di: hotspot\n━━━━━━━━━━━━━━━━━━━━━━`
+    const credentialLines = hasPassword
+      ? `Username: ${voucher.code}\nPassword: ${voucher.password}`
+      : `Kode: ${voucher.code}`
+    const text = `🎫 VOUCHER WIFI ROOT.VCR\n━━━━━━━━━━━━━━━━━━━━━━\n${credentialLines}\nProfile: ${voucher.profileName}\nMasa Aktif: ${voucher.durationDays} Jam\n\n📶 Login di: hotspot\n━━━━━━━━━━━━━━━━━━━━━━`
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(url, "_blank")
   }
@@ -71,16 +79,40 @@ export function VoucherSuccessModal({
                ))}
             </div>
 
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              KODE VOUCHER
-            </div>
-            <div className="bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg py-3 px-4 mx-auto max-w-[200px] mb-4">
-              <span className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
-            </div>
+            {hasPassword ? (
+              <div className="space-y-2 mb-4">
+                <div>
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Username</div>
+                  <div className="bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg py-2 px-4">
+                    <span className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Password</div>
+                  <div className="bg-white dark:bg-slate-700 border-2 border-blue-200 dark:border-blue-600 rounded-lg py-2 px-4">
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400 tracking-widest">{voucher.password}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                  KODE VOUCHER
+                </div>
+                <div className="bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg py-3 px-4 mx-auto max-w-[200px] mb-4">
+                  <span className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
+                </div>
+              </>
+            )}
 
             <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1 mt-4 border-t border-dashed border-slate-300 dark:border-slate-600 pt-4">
               <p>Profile: <span className="font-semibold text-slate-900 dark:text-slate-100">{voucher.profileName}</span></p>
               <p>Masa Aktif: <span className="font-semibold text-slate-900 dark:text-slate-100">{voucher.durationDays} Jam</span></p>
+              {hasPassword && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium pt-1">
+                  ⚠️ Simpan password ini — tidak akan ditampilkan lagi
+                </p>
+              )}
             </div>
           </div>
 

@@ -42,6 +42,18 @@ export function generateVoucherCode(
 }
 
 /**
+ * Generate a random alphanumeric password of the given length.
+ */
+export function generateRandomPassword(length: number): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  let result = ""
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+/**
  * Calculate reseller price given the base price and fee percentage (discount).
  * Example: basePrice=10000, feePercentage=15 → resellerPrice=8500
  */

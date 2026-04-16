@@ -22,23 +22,38 @@ export async function POST() {
   })
 
   // ── Bidirectional delete sync (admin only) ──────────────────────────────
-  // Delete from DB any voucher that no longer exists in MikroTik
+  // Delete from DB any voucher that no longer exists in MikroTik.
+  // Guard: skip entirely if MT returns an empty user list to prevent mass deletion.
   if (user.role === "admin" && vouchers.length > 0) {
     try {
       const mtUsers = await withMikrotik((api) =>
         api.menu("/ip/hotspot/user").getAll() as Promise<HotspotUser[]>
       )
-      const mtSet = new Set(mtUsers.map((u) => u.name).filter(Boolean))
 
-      const toDelete = vouchers.filter((v) => !mtSet.has(v.code))
-      if (toDelete.length > 0) {
-        console.log("[sync-vouchers] Deleting from DB (not in MT):", toDelete.map((v) => v.code))
-        await prisma.voucher.deleteMany({
-          where: { id: { in: toDelete.map((v) => v.id) } },
-        })
-        // Remove deleted vouchers from the list before status sync
-        const deletedIds = new Set(toDelete.map((v) => v.id))
-        vouchers = vouchers.filter((v) => !deletedIds.has(v.id))
+      console.log("[sync-vouchers] MT user count:", mtUsers.length, "DB voucher count:", vouchers.length)
+      mtUsers.forEach((u) => console.log("[sync-vouchers] FROM MT:", u.name, "(type:", typeof u.name, ")"))
+
+      // Guard: if MikroTik returned 0 users, skip deletion — avoids wiping DB
+      // on connection lag or partial response.
+      if (mtUsers.length === 0) {
+        console.warn("[sync-vouchers] MT returned 0 users — skipping bidirectional delete to avoid false wipe")
+      } else {
+        // Always stringify names to avoid type-mismatch with numeric usernames
+        // (routeros-client may return numbers for numeric-only names at runtime)
+        const mtSet = new Set(
+          mtUsers.map((u) => String(u.name ?? "")).filter(Boolean)
+        )
+
+        const toDelete = vouchers.filter((v) => !mtSet.has(String(v.code)))
+        if (toDelete.length > 0) {
+          console.log("[sync-vouchers] Deleting from DB (not in MT):", toDelete.map((v) => v.code))
+          await prisma.voucher.deleteMany({
+            where: { id: { in: toDelete.map((v) => v.id) } },
+          })
+          // Remove deleted vouchers from the list before status sync
+          const deletedIds = new Set(toDelete.map((v) => v.id))
+          vouchers = vouchers.filter((v) => !deletedIds.has(v.id))
+        }
       }
     } catch (e) {
       console.error("[sync-vouchers] MT delete-check error:", e)

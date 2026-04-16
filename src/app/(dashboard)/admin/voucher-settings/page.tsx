@@ -7,9 +7,9 @@ export const metadata = {
   title: "Voucher Settings — Root.VCR Admin",
 }
 
-type CodeFormat = "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed"
+type CodeFormat = "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric"
 
-const VALID_FORMATS: CodeFormat[] = ["alphanumeric_upper", "alphanumeric_lower", "alphanumeric_mixed"]
+const VALID_FORMATS: CodeFormat[] = ["alphanumeric_upper", "alphanumeric_lower", "alphanumeric_mixed", "numeric"]
 
 function toCodeFormat(v: string | null | undefined): CodeFormat {
   if (v && VALID_FORMATS.includes(v as CodeFormat)) return v as CodeFormat

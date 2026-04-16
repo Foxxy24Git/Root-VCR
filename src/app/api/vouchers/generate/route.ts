@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateVoucherSchema } from "@/lib/validations/voucher"
-import { generateVoucherCode, calculateResellerPrice } from "@/lib/utils"
+import { generateVoucherCode, calculateResellerPrice, generateRandomPassword } from "@/lib/utils"
 import { createHotspotUser } from "@/services/mikrotik.service"
 
 // POST /api/vouchers/generate
@@ -82,10 +82,11 @@ export async function POST(req: NextRequest) {
   const getSetting = (key: string, def: string) =>
     settings.find((s) => s.key === key)?.value ?? def
 
-  const prefix   = getSetting("voucher_prefix", "")
-  const codeLen  = parseInt(getSetting("voucher_code_length", "8"))
-  const format   = getSetting("voucher_code_format", "alphanumeric_upper") as
+  const prefix               = getSetting("voucher_prefix", "")
+  const codeLen              = parseInt(getSetting("voucher_code_length", "8"))
+  const format               = getSetting("voucher_code_format", "alphanumeric_upper") as
     "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric" | "alpha"
+  const usernameEqualsPassword = getSetting("voucher_username_equals_password", "true") === "true"
 
   // Generate kode unik (retry jika collision)
   const codes: string[] = []
@@ -100,6 +101,11 @@ export async function POST(req: NextRequest) {
     }
     attempts++
   }
+
+  // Generate password per voucher jika usernameEqualsPassword=false
+  const passwords: string[] = codes.map((code) =>
+    usernameEqualsPassword ? code : generateRandomPassword(8)
+  )
 
   if (codes.length < quantity) {
     return NextResponse.json(
@@ -127,8 +133,9 @@ export async function POST(req: NextRequest) {
   const vouchers = await prisma.$transaction(async (tx) => {
     // Buat semua voucher
     const created = await Promise.all(
-      codes.map((code) =>
-        tx.voucher.create({
+      codes.map((code) => {
+        console.log("INSERT DB:", code)
+        return tx.voucher.create({
           data: {
             code,
             user_id: user.id,
@@ -143,7 +150,7 @@ export async function POST(req: NextRequest) {
             profile: { select: { name: true, duration_days: true, duration_hours: true } },
           },
         })
-      )
+      })
     )
 
     // Potong wallet reseller
@@ -185,8 +192,8 @@ export async function POST(req: NextRequest) {
 
   // Sync ke MikroTik (best-effort — tidak gagalkan request jika MikroTik unreachable)
   const syncResults = await Promise.allSettled(
-    vouchers.map((v) =>
-      createHotspotUser(v.code, v.code, profile.mikrotik_profile)
+    vouchers.map((v, i) =>
+      createHotspotUser(v.code, passwords[i], profile.mikrotik_profile)
     )
   )
 
@@ -214,9 +221,15 @@ export async function POST(req: NextRequest) {
 
   const syncFailed = syncResults.filter((r) => r.status === "rejected").length
 
+  // Attach password to each voucher in the response
+  const vouchersWithPassword = vouchers.map((v, i) => ({
+    ...v,
+    password: usernameEqualsPassword ? null : passwords[i],
+  }))
+
   return NextResponse.json(
     {
-      vouchers,
+      vouchers: vouchersWithPassword,
       summary: {
         quantity,
         profile_name: profile.name,
@@ -225,6 +238,7 @@ export async function POST(req: NextRequest) {
         fee_percentage: feePercentage,
         mikrotik_synced: syncedIds.length,
         mikrotik_failed: syncFailed,
+        username_equals_password: usernameEqualsPassword,
       },
     },
     { status: 201 }

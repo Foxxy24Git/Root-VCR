@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, AlertCircle, RefreshCw, SlidersHorizontal } from
 import { generateVoucherCode } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
-type CodeFormat = "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed"
+type CodeFormat = "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric"
 
 interface VoucherSettingsFormProps {
   initial: {
@@ -18,13 +18,7 @@ interface VoucherSettingsFormProps {
 }
 
 function generatePreview(prefix: string, length: number, format: CodeFormat): string {
-  const fmt =
-    format === "alphanumeric_lower"
-      ? "alphanumeric_lower"
-      : format === "alphanumeric_mixed"
-      ? "alphanumeric_mixed"
-      : "alphanumeric_upper"
-  return generateVoucherCode(prefix, length, fmt)
+  return generateVoucherCode(prefix, length, format)
 }
 
 export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
@@ -83,6 +77,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
     { value: "alphanumeric_upper", label: "UPPERCASE",  example: "ABC123" },
     { value: "alphanumeric_lower", label: "lowercase",  example: "abc123" },
     { value: "alphanumeric_mixed", label: "MixedCase",  example: "AbC1x9" },
+    { value: "numeric",            label: "Numeric",    example: "123456" },
   ]
 
   return (
@@ -144,16 +139,16 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
               </div>
               <input
                 type="range"
-                min={6}
-                max={12}
+                min={3}
+                max={10}
                 step={1}
                 value={codeLength}
                 onChange={(e) => setCodeLength(Number(e.target.value))}
                 className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-full appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between mt-1">
-                <span className="text-xs text-slate-400 dark:text-slate-500">6</span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">12</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">3</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">10</span>
               </div>
             </div>
 
@@ -162,7 +157,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-3">
                 Character Format
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {formatOptions.map((opt) => (
                   <label
                     key={opt.value}
