@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, requireAuth } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
+import { deleteUser } from "@/services/mikrotik.service"
 
 type Params = { params: { id: string } }
 
@@ -27,7 +28,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return NextResponse.json({ voucher })
 }
 
-// DELETE /api/vouchers/[id] — admin only, hanya voucher unused
+// DELETE /api/vouchers/[id] — admin only
+// Flow: delete from MikroTik FIRST, then hard-delete from DB
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const { error } = await requireAdmin()
   if (error) return error
@@ -42,12 +44,17 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     )
   }
 
-  // Soft-delete: set status deleted
-  const updated = await prisma.voucher.update({
-    where: { id: params.id },
-    data: { status: "deleted" },
-    select: { id: true, code: true, status: true },
-  })
+  // 1. Delete from MikroTik first (source of truth)
+  try {
+    await deleteUser(voucher.code)
+    console.log("[DELETE voucher] Removed from MikroTik:", voucher.code)
+  } catch (e) {
+    console.error("[DELETE voucher] MikroTik error (continuing):", e)
+    // Non-fatal: user might already be gone from MT (e.g. deleted via Winbox)
+  }
 
-  return NextResponse.json({ voucher: updated, message: "Voucher dihapus" })
+  // 2. Hard-delete from DB
+  await prisma.voucher.delete({ where: { id: params.id } })
+
+  return NextResponse.json({ message: "Voucher dihapus" })
 }

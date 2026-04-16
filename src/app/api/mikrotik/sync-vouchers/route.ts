@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
 import { requireAuth } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
-import { computeVoucherStatuses } from "@/services/mikrotik.service"
+import { computeVoucherStatuses, HotspotUser } from "@/services/mikrotik.service"
+import { withMikrotik } from "@/lib/mikrotik"
 
 // POST /api/mikrotik/sync-vouchers
-// Admin: sync all non-deleted vouchers
+// Admin: sync all non-deleted vouchers + delete from DB if gone from MikroTik
 // Reseller: sync only their own vouchers
 export async function POST() {
   const { user, error } = await requireAuth()
@@ -15,10 +16,35 @@ export async function POST() {
       ? { user_id: user.id, status: { not: "deleted" as const } }
       : { status: { not: "deleted" as const } }
 
-  const vouchers = await prisma.voucher.findMany({
+  let vouchers = await prisma.voucher.findMany({
     where,
     select: { id: true, code: true, used_at: true, status: true, client_ip: true, client_mac: true },
   })
+
+  // ── Bidirectional delete sync (admin only) ──────────────────────────────
+  // Delete from DB any voucher that no longer exists in MikroTik
+  if (user.role === "admin" && vouchers.length > 0) {
+    try {
+      const mtUsers = await withMikrotik((api) =>
+        api.menu("/ip/hotspot/user").getAll() as Promise<HotspotUser[]>
+      )
+      const mtSet = new Set(mtUsers.map((u) => u.name).filter(Boolean))
+
+      const toDelete = vouchers.filter((v) => !mtSet.has(v.code))
+      if (toDelete.length > 0) {
+        console.log("[sync-vouchers] Deleting from DB (not in MT):", toDelete.map((v) => v.code))
+        await prisma.voucher.deleteMany({
+          where: { id: { in: toDelete.map((v) => v.id) } },
+        })
+        // Remove deleted vouchers from the list before status sync
+        const deletedIds = new Set(toDelete.map((v) => v.id))
+        vouchers = vouchers.filter((v) => !deletedIds.has(v.id))
+      }
+    } catch (e) {
+      console.error("[sync-vouchers] MT delete-check error:", e)
+      // Non-fatal: continue with status sync
+    }
+  }
 
   if (vouchers.length === 0) {
     return NextResponse.json({ synced: 0, total: 0, message: "Tidak ada voucher untuk disinkronkan" })

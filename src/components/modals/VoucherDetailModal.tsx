@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Copy, CreditCard, Info, Share2, Loader2, LogOut, Cookie } from "lucide-react"
+import { Copy, CreditCard, Info, Share2, Loader2, LogOut, Cookie, Trash2 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 export interface VoucherDetail {
@@ -23,6 +23,7 @@ interface VoucherDetailModalProps {
   onOpenChange: (open: boolean) => void
   voucher: VoucherDetail | null
   onActionSuccess?: () => void
+  isAdmin?: boolean
 }
 
 const idrFmt = (v: number) =>
@@ -51,10 +52,11 @@ export function VoucherDetailModal({
   onOpenChange,
   voucher,
   onActionSuccess,
+  isAdmin = false,
 }: VoucherDetailModalProps) {
   const [copied, setCopied] = React.useState(false)
   const [view, setView] = React.useState<"details" | "card">("details")
-  const [actionLoading, setActionLoading] = React.useState<"cookie" | "logout" | null>(null)
+  const [actionLoading, setActionLoading] = React.useState<"cookie" | "logout" | "delete" | null>(null)
   const [actionMsg, setActionMsg] = React.useState<{ type: "ok" | "err"; text: string } | null>(null)
 
   React.useEffect(() => {
@@ -108,6 +110,22 @@ export function VoucherDetailModal({
     } catch (e: unknown) {
       setActionMsg({ type: "err", text: e instanceof Error ? e.message : "Terjadi kesalahan" })
     } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(`Hapus voucher "${voucher.code}"? Voucher akan dihapus dari MikroTik dan database.`)) return
+    setActionLoading("delete")
+    setActionMsg(null)
+    try {
+      const res = await fetch(`/api/vouchers/${voucher.id}`, { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || data.error || "Gagal menghapus")
+      onActionSuccess?.()
+      onOpenChange(false)
+    } catch (e: unknown) {
+      setActionMsg({ type: "err", text: e instanceof Error ? e.message : "Terjadi kesalahan" })
       setActionLoading(null)
     }
   }
@@ -273,6 +291,21 @@ export function VoucherDetailModal({
                   </p>
                 )}
               </div>
+
+              {/* Admin: Delete voucher */}
+              {isAdmin && voucher.status !== "active" && (
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Hapus Voucher</p>
+                  <button
+                    onClick={handleDelete}
+                    disabled={!!actionLoading}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 text-xs font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {actionLoading === "delete" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Hapus dari MikroTik &amp; DB
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

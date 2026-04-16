@@ -550,6 +550,7 @@ function AllVouchers({
         onOpenChange={setDetailOpen}
         voucher={selectedVoucher}
         onActionSuccess={() => startTransition(() => router.refresh())}
+        isAdmin={true}
       />
     </div>
   )
