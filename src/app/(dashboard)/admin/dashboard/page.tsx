@@ -27,12 +27,13 @@ export default async function AdminDashboardPage() {
     totalResellerSaldo,
     revenueMTD,
     activeResellers,
-    recentWallets
+    recentWallets,
+    activeProfiles
   ] = await Promise.all([
     prisma.voucher.count({ where: { generated_at: { gte: today } } }),
     prisma.wallet.aggregate({ _sum: { balance: true } }),
     prisma.voucher.aggregate({
-      where: { generated_at: { gte: startOfMonth } },
+      where: { generated_at: { gte: startOfMonth }, source: "reseller" },
       _sum: { price_charged: true }
     }),
     prisma.user.count({ where: { role: "reseller", is_active: true, is_frozen: false } }),
@@ -42,6 +43,11 @@ export default async function AdminDashboardPage() {
       include: {
         wallet: { include: { user: { select: { name: true } } } }
       }
+    }),
+    prisma.profile.findMany({
+      where: { is_active: true },
+      orderBy: { price: "asc" },
+      select: { id: true, name: true, duration_days: true, duration_hours: true },
     })
   ])
 
@@ -58,7 +64,7 @@ export default async function AdminDashboardPage() {
   sevenDaysAgo.setHours(0, 0, 0, 0)
 
   const vouchersLast7Days = await prisma.voucher.findMany({
-    where: { generated_at: { gte: sevenDaysAgo } },
+    where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
     select: { generated_at: true, price_charged: true }
   })
 

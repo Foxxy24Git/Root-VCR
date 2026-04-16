@@ -43,13 +43,13 @@ export default async function AdminAnalyticsPage() {
   ] = await Promise.all([
     prisma.voucher.count({ where: { generated_at: { gte: today } } }),
     prisma.voucher.aggregate({
-      where: { generated_at: { gte: startOfMonth } },
+      where: { generated_at: { gte: startOfMonth }, source: "reseller" },
       _sum: { price_charged: true },
     }),
     prisma.user.count({ where: { role: "reseller", is_active: true, is_frozen: false } }),
     prisma.user.count({ where: { role: "reseller" } }),
     prisma.voucher.findMany({
-      where: { generated_at: { gte: sevenDaysAgo } },
+      where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
       select: { generated_at: true, price_charged: true, profile: { select: { name: true } } },
     }),
     prisma.wallet.findMany({
