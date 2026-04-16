@@ -109,7 +109,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Hitung harga per voucher
-  let priceCharged = basePrice
+  // Admin: gratis (price_charged = 0, tidak potong wallet)
+  let priceCharged = user.role === "admin" ? 0 : basePrice
   let feePercentage = 0
   if (user.role === "reseller") {
     const resellerData = await prisma.user.findUnique({
@@ -134,6 +135,7 @@ export async function POST(req: NextRequest) {
             profile_id: profileId,
             status: "unused",
             price_charged: priceCharged,
+            source: user.role === "admin" ? "admin" : "reseller",
           },
           select: {
             id: true, code: true, status: true, price_charged: true,
