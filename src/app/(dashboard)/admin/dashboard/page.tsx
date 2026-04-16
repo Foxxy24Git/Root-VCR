@@ -202,14 +202,14 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Cetak Voucher — Admin Only, full-width row */}
-        <div className="lg:col-span-3">
+        {/* Cetak Voucher — Admin Only, kiri sejajar chart */}
+        <div className="lg:col-span-2">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6">
             <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">Cetak Voucher</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Generate voucher tanpa potong saldo — tidak masuk laporan keuangan.
             </p>
-            <div className="max-w-lg mx-auto">
+            <div className="max-w-md mx-auto">
               <AdminPrintVoucherForm profiles={activeProfiles} />
             </div>
           </div>
