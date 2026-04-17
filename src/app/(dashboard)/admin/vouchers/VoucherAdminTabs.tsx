@@ -35,6 +35,7 @@ interface Voucher {
   client_ip: string | null
   client_mac: string | null
   price_charged: number
+  password?: string | null
 }
 
 interface PppoeUser {
@@ -351,6 +352,7 @@ function AllVouchers({
       client_ip: v.client_ip,
       client_mac: v.client_mac,
       price_charged: v.price_charged,
+      password: v.password,
     })
     setDetailOpen(true)
   }

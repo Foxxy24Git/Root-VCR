@@ -77,6 +77,7 @@ export default async function AdminVouchersPage({
     client_ip: v.client_ip ?? null,
     client_mac: v.client_mac ?? null,
     price_charged: Number(v.price_charged),
+    password: v.password ?? null,
   }))
 
   const mappedPppoe = pppoeUsers.map(u => ({
