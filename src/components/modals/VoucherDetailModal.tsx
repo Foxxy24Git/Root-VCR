@@ -16,6 +16,7 @@ export interface VoucherDetail {
   client_ip: string | null
   client_mac: string | null
   price_charged: number
+  password?: string | null
 }
 
 interface VoucherDetailModalProps {
@@ -45,6 +46,14 @@ const formatDate = (dateStr: string | null) => {
     hour: "2-digit",
     minute: "2-digit",
   })
+}
+
+function resolvePasswordDisplay(password: string | null | undefined, code: string): string {
+  if (password !== null && password !== undefined) {
+    return password === code ? "sama dengan kode" : password
+  }
+  // old voucher: null password — username always equals code in this system
+  return code
 }
 
 export function VoucherDetailModal({
@@ -197,6 +206,12 @@ export function VoucherDetailModal({
                       <span className="opacity-70 block mb-0.5">Reseller</span>
                       <span className="font-semibold">{voucher.user_name ?? "-"}</span>
                     </div>
+                    <div className="col-span-2">
+                      <span className="opacity-70 block mb-0.5">Password</span>
+                      <span className="font-semibold font-mono">
+                        {resolvePasswordDisplay(voucher.password, voucher.code)}
+                      </span>
+                    </div>
                     {voucher.client_ip && (
                       <div className="col-span-2">
                         <span className="opacity-70 block mb-0.5">Client IP</span>
@@ -219,6 +234,13 @@ export function VoucherDetailModal({
               <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 text-center">
                 <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Kode Voucher</span>
                 <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-widest">{voucher.code}</span>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 flex items-center justify-between">
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Password</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100 font-mono tracking-wider">
+                  {resolvePasswordDisplay(voucher.password, voucher.code)}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
