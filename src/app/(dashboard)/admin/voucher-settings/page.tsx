@@ -28,6 +28,7 @@ export default async function VoucherSettingsPage() {
           "voucher_code_length",
           "voucher_code_format",
           "voucher_username_equals_password",
+          "voucher_password_prefix",
         ],
       },
     },
@@ -37,10 +38,11 @@ export default async function VoucherSettingsPage() {
   rows.forEach((r) => { map[r.key] = r.value })
 
   const initial = {
-    voucher_prefix:                  map.voucher_prefix ?? "",
-    voucher_code_length:             parseInt(map.voucher_code_length ?? "8"),
-    voucher_code_format:             toCodeFormat(map.voucher_code_format),
+    voucher_prefix:                   map.voucher_prefix ?? "",
+    voucher_code_length:              parseInt(map.voucher_code_length ?? "8"),
+    voucher_code_format:              toCodeFormat(map.voucher_code_format),
     voucher_username_equals_password: map.voucher_username_equals_password === "true",
+    voucher_password_prefix:          map.voucher_password_prefix ?? "",
   }
 
   return (
