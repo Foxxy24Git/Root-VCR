@@ -93,6 +93,7 @@ model Profile {
 model Voucher {
   id              String        @id @default(uuid())
   code            String        @unique @db.VarChar(50)
+  password        String?       @db.VarChar(60)
   user_id         String?
   profile_id      String?
   status          VoucherStatus @default(unused)
