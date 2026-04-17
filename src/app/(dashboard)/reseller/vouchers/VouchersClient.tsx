@@ -11,6 +11,7 @@ export type SerializedVoucher = {
   generated_at: string; used_at: string | null; expired_at: string | null
   client_ip: string | null; client_mac: string | null
   profile: { id: string; name: string } | null
+  password?: string | null
 }
 
 interface VouchersClientProps { vouchers: SerializedVoucher[] }
@@ -47,6 +48,7 @@ export function VouchersClient({ vouchers }: VouchersClientProps) {
       id: v.id, code: v.code, profile: v.profile?.name ?? null, user_name: null,
       generated_at: v.generated_at, used_at: v.used_at, expired_at: v.expired_at,
       status: v.status, client_ip: v.client_ip, client_mac: v.client_mac, price_charged: v.price_charged,
+      password: v.password,
     })
     setModalOpen(true)
   }

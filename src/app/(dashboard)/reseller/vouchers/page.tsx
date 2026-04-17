@@ -78,6 +78,7 @@ export default async function VoucherManagementPage({
     client_ip: v.client_ip,
     client_mac: v.client_mac,
     profile: v.profile ? { id: v.profile.id, name: v.profile.name } : null,
+    password: v.password ?? null,
   }))
 
   return (
