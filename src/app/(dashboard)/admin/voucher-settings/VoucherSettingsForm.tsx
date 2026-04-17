@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useCallback } from "react"
 import { Loader2, CheckCircle2, AlertCircle, RefreshCw, SlidersHorizontal } from "lucide-react"
-import { generateVoucherCode } from "@/lib/utils"
+import { generateVoucherCode, generateRandomPassword } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
 type CodeFormat = "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric"
@@ -14,6 +14,7 @@ interface VoucherSettingsFormProps {
     voucher_code_length: number
     voucher_code_format: CodeFormat
     voucher_username_equals_password: boolean
+    voucher_password_prefix: string
   }
 }
 
@@ -28,6 +29,8 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
   const [usernameEqualsPassword, setUsernameEqualsPassword] = useState(
     initial.voucher_username_equals_password
   )
+  const [passwordPrefix, setPasswordPrefix] = useState(initial.voucher_password_prefix)
+  const [previewPassword, setPreviewPassword] = useState(() => generateRandomPassword(8))
 
   const [preview, setPreview] = useState(() => generatePreview(prefix, codeLength, format))
 
@@ -36,6 +39,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
 
   const refreshPreview = useCallback(() => {
     setPreview(generatePreview(prefix, codeLength, format))
+    setPreviewPassword(generateRandomPassword(8))
   }, [prefix, codeLength, format])
 
   React.useEffect(() => {
@@ -45,6 +49,11 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
   const handlePrefixChange = (v: string) => {
     const clean = v.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5)
     setPrefix(clean)
+  }
+
+  const handlePasswordPrefixChange = (v: string) => {
+    const clean = v.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5)
+    setPasswordPrefix(clean)
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -61,6 +70,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
             { key: "voucher_code_length",              value: String(codeLength) },
             { key: "voucher_code_format",              value: format },
             { key: "voucher_username_equals_password", value: usernameEqualsPassword ? "true" : "false" },
+            { key: "voucher_password_prefix",          value: passwordPrefix },
           ],
         }),
       })
@@ -123,6 +133,26 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">
                   {prefix.length}/5
+                </span>
+              </div>
+            </div>
+
+            {/* Password Prefix */}
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                Password Prefix <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(maks 5 karakter, alfanumerik)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={passwordPrefix}
+                  onChange={(e) => handlePasswordPrefixChange(e.target.value)}
+                  maxLength={5}
+                  placeholder="Contoh: PS"
+                  className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 font-mono font-semibold tracking-widest uppercase text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                  {passwordPrefix.length}/5
                 </span>
               </div>
             </div>
@@ -241,13 +271,17 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
           </div>
           <div className="p-6 space-y-5">
             {/* Preview Code Display */}
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-6 text-center shadow-lg shadow-blue-500/20">
-              <p className="text-xs font-semibold text-blue-100 uppercase tracking-widest mb-2">
-                Kode Voucher
-              </p>
-              <p className="text-2xl font-black text-white tracking-widest font-mono break-all">
-                {preview}
-              </p>
+            <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-5 shadow-lg shadow-blue-500/20 space-y-3">
+              <div className="text-center">
+                <p className="text-xs font-semibold text-blue-100 uppercase tracking-widest mb-1">Username</p>
+                <p className="text-xl font-black text-white tracking-widest font-mono break-all">{preview}</p>
+              </div>
+              <div className="border-t border-white/20 pt-3 text-center">
+                <p className="text-xs font-semibold text-blue-100 uppercase tracking-widest mb-1">Password</p>
+                <p className="text-xl font-black text-white tracking-widest font-mono break-all">
+                  {usernameEqualsPassword ? preview : (passwordPrefix + previewPassword) || previewPassword}
+                </p>
+              </div>
             </div>
 
             {/* Config Summary */}
@@ -268,7 +302,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                   {formatOptions.find((f) => f.value === format)?.label}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Username = Password</span>
                 <span className={cn(
                   "text-xs font-semibold px-2 py-0.5 rounded-full",
@@ -279,6 +313,14 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
                   {usernameEqualsPassword ? "Aktif" : "Nonaktif"}
                 </span>
               </div>
+              {!usernameEqualsPassword && (
+                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Password Prefix</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                    {passwordPrefix || <span className="text-slate-400 dark:text-slate-500 font-normal">—</span>}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Refresh Preview */}
