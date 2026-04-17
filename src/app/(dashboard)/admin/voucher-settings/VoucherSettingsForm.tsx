@@ -52,7 +52,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
   }
 
   const handlePasswordPrefixChange = (v: string) => {
-    const clean = v.replace(/[^a-zA-Z0-9]/g, "").slice(0, 5)
+    const clean = v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 5)
     setPasswordPrefix(clean)
   }
 
@@ -279,7 +279,7 @@ export function VoucherSettingsForm({ initial }: VoucherSettingsFormProps) {
               <div className="border-t border-white/20 pt-3 text-center">
                 <p className="text-xs font-semibold text-blue-100 uppercase tracking-widest mb-1">Password</p>
                 <p className="text-xl font-black text-white tracking-widest font-mono break-all">
-                  {usernameEqualsPassword ? preview : (passwordPrefix + previewPassword) || previewPassword}
+                  {usernameEqualsPassword ? preview : passwordPrefix + previewPassword}
                 </p>
               </div>
             </div>

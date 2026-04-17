@@ -110,7 +110,7 @@ export function VoucherSuccessModal({
               <p>Masa Aktif: <span className="font-semibold text-slate-900 dark:text-slate-100">{voucher.durationDays} Jam</span></p>
               {hasPassword && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 font-medium pt-1">
-                  ⚠️ Simpan password ini — tidak akan ditampilkan lagi
+                  ⚠️ Simpan password ini. Bisa dilihat kembali di Detail Voucher.
                 </p>
               )}
             </div>
