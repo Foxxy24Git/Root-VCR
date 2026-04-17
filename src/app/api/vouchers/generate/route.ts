@@ -77,7 +77,17 @@ export async function POST(req: NextRequest) {
 
   // Ambil settings untuk kode format
   const settings = await prisma.setting.findMany({
-    where: { key: { in: ["voucher_prefix", "voucher_code_length", "voucher_code_format", "voucher_username_equals_password"] } },
+    where: {
+      key: {
+        in: [
+          "voucher_prefix",
+          "voucher_code_length",
+          "voucher_code_format",
+          "voucher_username_equals_password",
+          "voucher_password_prefix",
+        ],
+      },
+    },
   })
   const getSetting = (key: string, def: string) =>
     settings.find((s) => s.key === key)?.value ?? def
@@ -87,6 +97,7 @@ export async function POST(req: NextRequest) {
   const format               = getSetting("voucher_code_format", "alphanumeric_upper") as
     "alphanumeric_upper" | "alphanumeric_lower" | "alphanumeric_mixed" | "numeric" | "alpha"
   const usernameEqualsPassword = getSetting("voucher_username_equals_password", "true") === "true"
+  const passwordPrefix = getSetting("voucher_password_prefix", "")
 
   // Generate kode unik (retry jika collision)
   const codes: string[] = []
@@ -104,7 +115,7 @@ export async function POST(req: NextRequest) {
 
   // Generate password per voucher jika usernameEqualsPassword=false
   const passwords: string[] = codes.map((code) =>
-    usernameEqualsPassword ? code : generateRandomPassword(8)
+    usernameEqualsPassword ? code : passwordPrefix + generateRandomPassword(8)
   )
 
   if (codes.length < quantity) {
@@ -133,11 +144,12 @@ export async function POST(req: NextRequest) {
   const vouchers = await prisma.$transaction(async (tx) => {
     // Buat semua voucher
     const created = await Promise.all(
-      codes.map((code) => {
+      codes.map((code, i) => {
         console.log("INSERT DB:", code)
         return tx.voucher.create({
           data: {
             code,
+            password: passwords[i],
             user_id: user.id,
             profile_id: profileId,
             status: "unused",
