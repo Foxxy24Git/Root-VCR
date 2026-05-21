@@ -23,7 +23,7 @@ export default async function ResellerDashboard() {
     await Promise.all([
       prisma.user.findUnique({
         where: { id: user.id },
-        select: { fee_percentage: true },
+        select: { fee_percentage: true, name: true, email: true },
       }),
       prisma.wallet.findUnique({ where: { user_id: user.id } }),
 
@@ -87,7 +87,11 @@ export default async function ResellerDashboard() {
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <WalletCard balance={balance} />
+        <WalletCard
+          balance={balance}
+          userEmail={dbUser?.email ?? user.email}
+          userName={dbUser?.name ?? user.name}
+        />
 
         <Link href="/voucher/semua" className="block hover:scale-[1.02] transition-transform">
           <StatsCard
