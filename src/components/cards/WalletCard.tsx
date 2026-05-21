@@ -6,38 +6,85 @@ import { Wallet, Plus, ArrowUpRight } from "lucide-react"
 
 export interface WalletCardProps extends React.HTMLAttributes<HTMLDivElement> {
   balance: number
+  userEmail?: string
+  userName?: string
   onTopUpClick?: () => void
   onWithdrawClick?: () => void
 }
 
+type ContactSettings = {
+  whatsapp_number: string | null
+  whatsapp_topup_message: string | null
+  whatsapp_withdraw_message: string | null
+}
+
+function normalizePhone(v: string): string {
+  const digits = v.replace(/\D/g, "")
+  if (digits.startsWith("0")) return "62" + digits.slice(1)
+  return digits
+}
+
+function renderTemplate(
+  template: string,
+  vars: { amount: string; email: string; name: string }
+): string {
+  return template
+    .replaceAll("{amount}", vars.amount)
+    .replaceAll("{email}", vars.email)
+    .replaceAll("{name}", vars.name)
+}
+
+async function openWaForAction(
+  action: "topup" | "withdraw",
+  userEmail: string,
+  userName: string
+) {
+  const raw = window.prompt(
+    `Masukkan nominal ${action === "topup" ? "Top Up" : "Withdraw"} (contoh: 100000):`
+  )
+  if (!raw) return
+  const amountDigits = raw.replace(/\D/g, "")
+  if (!amountDigits) return
+
+  let settings: ContactSettings | null = null
+  try {
+    const res = await fetch("/api/settings/contact")
+    if (res.ok) settings = await res.json()
+  } catch {
+    // handled below by null check
+  }
+
+  if (!settings?.whatsapp_number) {
+    window.alert("Admin belum mengatur nomor WhatsApp. Hubungi admin.")
+    return
+  }
+
+  const template =
+    action === "topup"
+      ? settings.whatsapp_topup_message ?? ""
+      : settings.whatsapp_withdraw_message ?? ""
+
+  const message = renderTemplate(template, {
+    amount: Number(amountDigits).toLocaleString("id-ID"),
+    email: userEmail,
+    name: userName,
+  })
+
+  const phone = normalizePhone(settings.whatsapp_number)
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank")
+}
+
 export function WalletCard({
   balance,
+  userEmail = "",
+  userName = "",
   onTopUpClick,
   onWithdrawClick,
   className,
   ...props
 }: WalletCardProps) {
-  const handleTopUp = onTopUpClick ?? (() => {
-    const raw = window.prompt("Masukkan nominal Top Up (contoh: 100000):")
-    if (!raw) return
-    const amount = raw.replace(/\D/g, "")
-    if (!amount) return
-    window.open(
-      `https://wa.me/6282288231533?text=${encodeURIComponent(`HALOO TOP UP ${amount}`)}`,
-      "_blank"
-    )
-  })
-
-  const handleWithdraw = onWithdrawClick ?? (() => {
-    const raw = window.prompt("Masukkan nominal Withdraw (contoh: 100000):")
-    if (!raw) return
-    const amount = raw.replace(/\D/g, "")
-    if (!amount) return
-    window.open(
-      `https://wa.me/6282288231533?text=${encodeURIComponent(`HALOO WITHDRAW ${amount}`)}`,
-      "_blank"
-    )
-  })
+  const handleTopUp = onTopUpClick ?? (() => openWaForAction("topup", userEmail, userName))
+  const handleWithdraw = onWithdrawClick ?? (() => openWaForAction("withdraw", userEmail, userName))
 
   return (
     <div
@@ -49,7 +96,6 @@ export function WalletCard({
       )}
       {...props}
     >
-      {/* Decorative Orbs */}
       <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-white opacity-10 blur-2xl" />
       <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full bg-white opacity-10 blur-xl" />
 
