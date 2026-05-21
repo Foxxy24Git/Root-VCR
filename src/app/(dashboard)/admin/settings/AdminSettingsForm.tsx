@@ -6,7 +6,7 @@ import Image from "next/image"
 import {
   Server, Globe, HardDrive, Lock, User,
   CheckCircle2, Loader2, Eye, EyeOff, RefreshCw, AlertCircle,
-  Camera, Trash2, AlertTriangle
+  Camera, Trash2, AlertTriangle, MessageCircle
 } from "lucide-react"
 
 interface AdminUser {
@@ -29,6 +29,9 @@ interface Settings {
   backup_auto_enabled?: string
   backup_schedule?: string
   backup_retention_days?: string
+  whatsapp_number?: string
+  whatsapp_topup_message?: string
+  whatsapp_withdraw_message?: string
 }
 
 interface AdminSettingsFormProps {
@@ -489,6 +492,156 @@ function BackupTab({ settings }: { settings: Settings }) {
   )
 }
 
+// ── Tab: Contact ─────────────────────────────────────────────────────────────
+
+function ContactTab({ settings }: { settings: Settings }) {
+  const [form, setForm] = useState({
+    whatsapp_number: settings.whatsapp_number ?? "",
+    whatsapp_topup_message: settings.whatsapp_topup_message ?? "",
+    whatsapp_withdraw_message: settings.whatsapp_withdraw_message ?? "",
+  })
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+
+  const topupRef = useRef<HTMLTextAreaElement>(null)
+  const withdrawRef = useRef<HTMLTextAreaElement>(null)
+
+  const validatePhone = (v: string) => /^(08|628)\d{8,12}$/.test(v)
+
+  const insertVar = (
+    ref: React.RefObject<HTMLTextAreaElement>,
+    field: "whatsapp_topup_message" | "whatsapp_withdraw_message",
+    variable: string
+  ) => {
+    const el = ref.current
+    if (!el) return
+    const start = el.selectionStart ?? form[field].length
+    const end = el.selectionEnd ?? form[field].length
+    const newValue = form[field].slice(0, start) + variable + form[field].slice(end)
+    setForm(p => ({ ...p, [field]: newValue }))
+    requestAnimationFrame(() => {
+      el.focus()
+      const caret = start + variable.length
+      el.setSelectionRange(caret, caret)
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validatePhone(form.whatsapp_number)) {
+      setPhoneError("Format nomor WhatsApp tidak valid (08xx atau 628xx)")
+      return
+    }
+    setPhoneError(null)
+    setSaving(true)
+    setMsg(null)
+    try {
+      const res = await fetch("/api/settings/contact", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      setMsg({ type: res.ok ? "success" : "error", text: data.message || (res.ok ? "Tersimpan" : "Gagal") })
+    } catch {
+      setMsg({ type: "error", text: "Gagal menyimpan pengaturan" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const renderPreview = (template: string) =>
+    template
+      .replaceAll("{amount}", "100.000")
+      .replaceAll("{email}", "reseller@example.com")
+      .replaceAll("{name}", "Demo Reseller")
+
+  const textareaCls = `${inputCls} resize-y font-mono text-sm`
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">Nomor WhatsApp Admin</label>
+        <input
+          value={form.whatsapp_number}
+          onChange={e => { setForm(p => ({ ...p, whatsapp_number: e.target.value })); setPhoneError(null) }}
+          className={inputCls}
+          placeholder="0822xxxxxxxx atau 628xxxxxxxxxx"
+        />
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          Format: <code>08xx</code> atau <code>628xx</code>. Reseller akan diarahkan ke nomor ini saat klik Top Up / Withdraw.
+        </p>
+        {phoneError && (
+          <p className="text-xs text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1">
+            <AlertCircle className="w-3.5 h-3.5" />{phoneError}
+          </p>
+        )}
+      </div>
+
+      {([
+        { key: "whatsapp_topup_message", label: "Template Pesan Topup", ref: topupRef },
+        { key: "whatsapp_withdraw_message", label: "Template Pesan Withdraw", ref: withdrawRef },
+      ] as const).map(({ key, label, ref }) => (
+        <div key={key}>
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{label}</label>
+          <textarea
+            ref={ref}
+            rows={3}
+            value={form[key]}
+            onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
+            className={textareaCls}
+            placeholder="Halo Admin, saya mau ... Rp {amount} untuk akun {email}"
+          />
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Sisipkan variabel:</span>
+            {["{amount}", "{email}", "{name}"].map(v => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => insertVar(ref, key, v)}
+                className="text-xs font-mono px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowPreview(v => !v)}
+          className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          {showPreview ? "Sembunyikan preview" : "Lihat preview pesan"}
+        </button>
+
+        {showPreview && (
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Preview Topup</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+                {renderPreview(form.whatsapp_topup_message) || <span className="italic text-slate-400">—</span>}
+              </p>
+            </div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Preview Withdraw</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+                {renderPreview(form.whatsapp_withdraw_message) || <span className="italic text-slate-400">—</span>}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <SaveBar saving={saving} msg={msg} />
+    </form>
+  )
+}
+
 // ── Tab: Security ─────────────────────────────────────────────────────────────
 
 function SecurityTab() {
@@ -709,12 +862,13 @@ function SaveBar({ saving, msg }: { saving: boolean; msg: { type: "success" | "e
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProps) {
-  const [activeTab, setActiveTab] = useState<"profile" | "mikrotik" | "hotspot" | "backup" | "security" | "danger">("profile")
+  const [activeTab, setActiveTab] = useState<"profile" | "mikrotik" | "hotspot" | "contact" | "backup" | "security" | "danger">("profile")
 
   const tabs = [
     { id: "profile", label: "Profil", icon: <User className="w-4 h-4" /> },
     { id: "mikrotik", label: "MikroTik", icon: <Server className="w-4 h-4" /> },
     { id: "hotspot", label: "Hotspot", icon: <Globe className="w-4 h-4" /> },
+    { id: "contact", label: "Contact", icon: <MessageCircle className="w-4 h-4" /> },
     { id: "backup", label: "Backup", icon: <HardDrive className="w-4 h-4" /> },
     { id: "security", label: "Security", icon: <Lock className="w-4 h-4" /> },
     { id: "danger", label: "Reset Data", icon: <Trash2 className="w-4 h-4" /> },
@@ -764,6 +918,16 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
           <div className="space-y-4">
             <h3 className="font-bold text-slate-900 dark:text-slate-100">Pengaturan Hotspot & Branding</h3>
             <HotspotTab settings={settings} />
+          </div>
+        )}
+
+        {activeTab === "contact" && (
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-900 dark:text-slate-100">Contact & Topup Settings</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Atur nomor WhatsApp dan template pesan yang dipakai tombol Top Up / Withdraw di dashboard reseller.
+            </p>
+            <ContactTab settings={settings} />
           </div>
         )}
 
