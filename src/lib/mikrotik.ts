@@ -21,7 +21,7 @@ export async function getMikrotikConfig(): Promise<MikrotikConfig> {
   const get = (key: string): string | null => rows.find((r) => r.key === key)?.value ?? null
 
   const host     = get("mikrotik_host")     || process.env.MIKROTIK_HOST     || null
-  const portStr  = get("mikrotik_api_port") || process.env.MIKROTIK_PORT     || null
+  const portStr  = get("mikrotik_api_port") || process.env.MIKROTIK_API_PORT || null
   const user     = get("mikrotik_user")     || process.env.MIKROTIK_USER     || null
   const password = get("mikrotik_pass")     ?? process.env.MIKROTIK_PASSWORD ?? null
 
