@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad Request", message: "File dan userId wajib ada" }, { status: 400 })
   }
 
-  // Reseller can only upload their own avatar
-  if (sessionUser.role !== "admin" && userId !== sessionUser.id) {
+  // Reseller can only upload their own avatar; tenant admin can upload for any user in their tenant
+  if (sessionUser.role === "RESELLER" && userId !== sessionUser.id) {
     return NextResponse.json({ error: "Forbidden", message: "Tidak diizinkan" }, { status: 403 })
   }
 

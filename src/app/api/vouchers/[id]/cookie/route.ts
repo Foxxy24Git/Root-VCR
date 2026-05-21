@@ -6,16 +6,20 @@ import { deleteHotspotCookie } from "@/services/mikrotik.service"
 type Params = { params: { id: string } }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
-  const voucher = await prisma.voucher.findUnique({ where: { id: params.id } })
+  const tenantId = user.tenantId!
+
+  const voucher = await prisma.voucher.findFirst({
+    where: { id: params.id, tenant_id: tenantId },
+  })
   if (!voucher) {
     return NextResponse.json({ error: "Voucher tidak ditemukan" }, { status: 404 })
   }
 
   try {
-    const result = await deleteHotspotCookie(voucher.code)
+    const result = await deleteHotspotCookie(tenantId, voucher.code)
     console.log(`[API] delete cookie voucher code="${voucher.code}" result=`, result)
     return NextResponse.json({
       success: result.success,

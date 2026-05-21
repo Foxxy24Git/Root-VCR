@@ -1,4 +1,4 @@
-import type { Role } from "@/types"
+import type { Role } from "@prisma/client"
 import "next-auth"
 import "next-auth/jwt"
 
@@ -9,6 +9,8 @@ declare module "next-auth" {
       email: string
       name: string
       role: Role
+      tenantId: string | null
+      tenantSlug: string | null
     }
   }
 
@@ -17,6 +19,8 @@ declare module "next-auth" {
     email: string
     name: string
     role: Role
+    tenantId: string | null
+    tenantSlug: string | null
   }
 }
 
@@ -24,5 +28,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string
     role: Role
+    tenantId: string | null
+    tenantSlug: string | null
   }
 }

@@ -5,10 +5,10 @@ import { parseSessionTimeout } from "@/services/mikrotik.service"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
-  const client = await createMikrotikClient()
+  const client = await createMikrotikClient(user.tenantId!)
   try {
     const conn = await client.connect()
     const profiles = await conn.menu("/ip/hotspot/user/profile").getAll()
@@ -37,8 +37,10 @@ export async function GET() {
 
 // DELETE /api/mikrotik/profiles?profileId=xxx — DB only, admin only
 export async function DELETE(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = user.tenantId!
 
   const profileId = req.nextUrl.searchParams.get("profileId")
   if (!profileId) {
@@ -48,6 +50,13 @@ export async function DELETE(req: NextRequest) {
   console.log("DELETE DB ONLY:", profileId)
 
   try {
+    // Verify profile belongs to tenant before delete
+    const existing = await prisma.profile.findFirst({
+      where: { id: profileId, tenant_id: tenantId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Not Found" }, { status: 404 })
+    }
     await prisma.profile.delete({ where: { id: profileId } })
     return NextResponse.json({ success: true })
   } catch (e: unknown) {

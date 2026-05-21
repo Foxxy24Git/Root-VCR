@@ -1,0 +1,14 @@
+{
+  "backupAt": "2026-05-21T20:50:24.429Z",
+  "schemaVersion": "pre-multitenant",
+  "counts": {
+    "users": 3,
+    "profiles": 5,
+    "vouchers": 0,
+    "wallets": 2,
+    "wallet_logs": 28,
+    "reseller_profiles": 8,
+    "settings": 20,
+    "pppoe_users": 0
+  }
+}

@@ -4,11 +4,11 @@ import { testMikrotikConnection } from "@/lib/mikrotik"
 
 // POST /api/settings/mikrotik/test
 export async function POST() {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
   try {
-    const result = await testMikrotikConnection()
+    const result = await testMikrotikConnection(user.tenantId!)
     return NextResponse.json(
       { ok: result.ok, message: result.ok ? `Terhubung! Latensi: ${result.latencyMs}ms` : result.error },
       { status: result.ok ? 200 : 503 }

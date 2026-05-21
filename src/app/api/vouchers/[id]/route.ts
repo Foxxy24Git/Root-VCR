@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth } from "@/lib/api-helpers"
+import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { deleteUser } from "@/services/mikrotik.service"
 
@@ -10,8 +10,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { user, error } = await requireAuth()
   if (error) return error
 
-  const voucher = await prisma.voucher.findUnique({
-    where: { id: params.id },
+  const { tenantId, error: tenantErr } = resolveTenantId(user)
+  if (tenantErr) return tenantErr
+
+  const voucher = await prisma.voucher.findFirst({
+    where: { id: params.id, tenant_id: tenantId },
     include: {
       user: { select: { id: true, name: true, email: true } },
       profile: true,
@@ -21,7 +24,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (!voucher) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   // Reseller hanya bisa lihat voucher miliknya
-  if (user.role === "reseller" && voucher.user_id !== user.id) {
+  if (user.role === "RESELLER" && voucher.user_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -31,10 +34,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // DELETE /api/vouchers/[id] — admin only
 // Flow: delete from MikroTik FIRST, then hard-delete from DB
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
-  const voucher = await prisma.voucher.findUnique({ where: { id: params.id } })
+  const tenantId = user.tenantId!
+
+  const voucher = await prisma.voucher.findFirst({
+    where: { id: params.id, tenant_id: tenantId },
+  })
   if (!voucher) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   if (voucher.status === "active") {
@@ -46,11 +53,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   // 1. Delete from MikroTik first (source of truth)
   try {
-    await deleteUser(voucher.code)
+    await deleteUser(tenantId, voucher.code)
     console.log("[DELETE voucher] Removed from MikroTik:", voucher.code)
   } catch (e) {
     console.error("[DELETE voucher] MikroTik error (continuing):", e)
-    // Non-fatal: user might already be gone from MT (e.g. deleted via Winbox)
   }
 
   // 2. Hard-delete from DB

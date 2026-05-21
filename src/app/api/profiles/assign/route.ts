@@ -10,8 +10,10 @@ const assignSchema = z.object({
 
 // POST /api/profiles/assign — admin only
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user: sessionUser, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = sessionUser.tenantId!
 
   let body: unknown
   try {
@@ -30,13 +32,29 @@ export async function POST(req: NextRequest) {
 
   const { userId, profileIds } = parsed.data
 
-  // Verify user exists and is a reseller
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-  if (!user || user.role !== "reseller") {
+  // Verify reseller belongs to this tenant
+  const user = await prisma.user.findFirst({
+    where: { id: userId, tenant_id: tenantId },
+    select: { role: true },
+  })
+  if (!user || user.role !== "RESELLER") {
     return NextResponse.json({ error: "Not Found", message: "Reseller tidak ditemukan" }, { status: 404 })
   }
 
-  // Delete existing assignments, then insert new ones
+  // Verify all profileIds belong to this tenant
+  if (profileIds.length > 0) {
+    const validProfiles = await prisma.profile.findMany({
+      where: { id: { in: profileIds }, tenant_id: tenantId },
+      select: { id: true },
+    })
+    if (validProfiles.length !== profileIds.length) {
+      return NextResponse.json(
+        { error: "Validation Error", message: "Beberapa profile tidak valid" },
+        { status: 422 }
+      )
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.resellerProfile.deleteMany({ where: { user_id: userId } })
 
@@ -46,6 +64,7 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           profile_id,
           is_enabled: true,
+          tenant_id: tenantId,
         })),
       })
     }
@@ -56,8 +75,10 @@ export async function POST(req: NextRequest) {
 
 // GET /api/profiles/assign?userId=xxx — get current assignments for a reseller
 export async function GET(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user: sessionUser, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = sessionUser.tenantId!
 
   const userId = req.nextUrl.searchParams.get("userId")
   if (!userId) {
@@ -65,7 +86,7 @@ export async function GET(req: NextRequest) {
   }
 
   const assignments = await prisma.resellerProfile.findMany({
-    where: { user_id: userId },
+    where: { user_id: userId, tenant_id: tenantId },
     select: { profile_id: true, is_enabled: true },
   })
 

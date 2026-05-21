@@ -3,11 +3,11 @@ import { requireAdmin } from "@/lib/api-helpers"
 import { getPPPoEStatus } from "@/services/mikrotik.service"
 
 export async function GET() {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
   try {
-    const data = await getPPPoEStatus()
+    const data = await getPPPoEStatus(user.tenantId!)
     return NextResponse.json(data)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

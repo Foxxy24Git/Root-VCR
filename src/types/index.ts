@@ -1,4 +1,7 @@
-export type Role = "admin" | "reseller"
+// Role enum re-exported from Prisma agar tipe konsisten antara DB & app.
+// Values: SUPER_ADMIN | TENANT_ADMIN | RESELLER (per schema 2026-05-22).
+import type { Role } from "@prisma/client"
+export type { Role }
 
 export type VoucherStatus = "unused" | "active" | "inactive" | "expired" | "deleted"
 

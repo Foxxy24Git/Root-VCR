@@ -17,6 +17,8 @@ export default async function AdminDashboardPage() {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
+  const tenantId = user.tenantId!
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -32,14 +34,15 @@ export default async function AdminDashboardPage() {
     recentWallets,
     activeProfiles
   ] = await Promise.all([
-    prisma.voucher.count({ where: { generated_at: { gte: today } } }),
-    prisma.wallet.aggregate({ _sum: { balance: true } }),
+    prisma.voucher.count({ where: { tenant_id: tenantId, generated_at: { gte: today } } }),
+    prisma.wallet.aggregate({ where: { tenant_id: tenantId }, _sum: { balance: true } }),
     prisma.voucher.aggregate({
-      where: { generated_at: { gte: startOfMonth }, source: "reseller" },
+      where: { tenant_id: tenantId, generated_at: { gte: startOfMonth }, source: "reseller" },
       _sum: { price_charged: true }
     }),
-    prisma.user.count({ where: { role: "reseller", is_active: true, is_frozen: false } }),
+    prisma.user.count({ where: { tenant_id: tenantId, role: "RESELLER", is_active: true, is_frozen: false } }),
     prisma.walletLog.findMany({
+      where: { tenant_id: tenantId },
       take: 5,
       orderBy: { created_at: "desc" },
       include: {
@@ -47,7 +50,7 @@ export default async function AdminDashboardPage() {
       }
     }),
     prisma.profile.findMany({
-      where: { is_active: true },
+      where: { tenant_id: tenantId, is_active: true },
       orderBy: { price: "asc" },
       select: { id: true, name: true, duration_days: true, duration_hours: true },
     })
@@ -66,7 +69,7 @@ export default async function AdminDashboardPage() {
   sevenDaysAgo.setHours(0, 0, 0, 0)
 
   const vouchersLast7Days = await prisma.voucher.findMany({
-    where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
+    where: { tenant_id: tenantId, generated_at: { gte: sevenDaysAgo }, source: "reseller" },
     select: { generated_at: true, price_charged: true }
   })
 
@@ -86,6 +89,7 @@ export default async function AdminDashboardPage() {
   })
 
   const topResellers = await prisma.wallet.findMany({
+    where: { tenant_id: tenantId },
     take: 5,
     orderBy: { total_spent: "desc" },
     include: { user: { select: { name: true, email: true, avatar_url: true } } }
@@ -95,7 +99,7 @@ export default async function AdminDashboardPage() {
   let pppoeOnline: number | null = null
   let pppoeTotal: number | null = null
   try {
-    const pppoe = await getPPPoEStatus()
+    const pppoe = await getPPPoEStatus(tenantId)
     pppoeOnline = pppoe.online
     pppoeTotal = pppoe.total
   } catch (err) {

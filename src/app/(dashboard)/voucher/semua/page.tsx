@@ -8,7 +8,7 @@ export default async function VoucherSemuaPage() {
     redirect("/login")
   }
 
-  if (user.role === "admin") {
+  if (user.role === "SUPER_ADMIN" || user.role === "TENANT_ADMIN") {
     redirect("/admin/vouchers?tab=vouchers")
   }
 

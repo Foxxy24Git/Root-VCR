@@ -12,6 +12,8 @@ export default async function AdminAnalyticsPage() {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
+  const tenantId = user.tenantId!
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -41,35 +43,36 @@ export default async function AdminAnalyticsPage() {
     topResellers,
     profileCounts,
   ] = await Promise.all([
-    prisma.voucher.count({ where: { generated_at: { gte: today } } }),
+    prisma.voucher.count({ where: { tenant_id: tenantId, generated_at: { gte: today } } }),
     prisma.voucher.aggregate({
-      where: { generated_at: { gte: startOfMonth }, source: "reseller" },
+      where: { tenant_id: tenantId, generated_at: { gte: startOfMonth }, source: "reseller" },
       _sum: { price_charged: true },
     }),
-    prisma.user.count({ where: { role: "reseller", is_active: true, is_frozen: false } }),
-    prisma.user.count({ where: { role: "reseller" } }),
+    prisma.user.count({ where: { tenant_id: tenantId, role: "RESELLER", is_active: true, is_frozen: false } }),
+    prisma.user.count({ where: { tenant_id: tenantId, role: "RESELLER" } }),
     prisma.voucher.findMany({
-      where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
+      where: { tenant_id: tenantId, generated_at: { gte: sevenDaysAgo }, source: "reseller" },
       select: { generated_at: true, price_charged: true, profile: { select: { name: true } } },
     }),
     prisma.wallet.findMany({
+      where: { tenant_id: tenantId },
       take: 8,
       orderBy: { total_spent: "desc" },
       include: { user: { select: { name: true } } },
     }),
     prisma.voucher.groupBy({
       by: ["profile_id"],
-      where: { generated_at: { gte: sevenDaysAgo }, source: "reseller" },
+      where: { tenant_id: tenantId, generated_at: { gte: sevenDaysAgo }, source: "reseller" },
       _count: { id: true },
       orderBy: { _count: { id: "desc" } },
       take: 6,
     }),
   ])
 
-  // Fetch profile names for profileCounts
+  // Fetch profile names for profileCounts (scoped to tenant)
   const profileIds = profileCounts.map(p => p.profile_id).filter(Boolean) as string[]
   const profileNames = await prisma.profile.findMany({
-    where: { id: { in: profileIds } },
+    where: { id: { in: profileIds }, tenant_id: tenantId },
     select: { id: true, name: true },
   })
   const profileNameMap = Object.fromEntries(profileNames.map(p => [p.id, p.name]))

@@ -8,10 +8,17 @@ type ContactKey = (typeof KEYS)[number]
 const PHONE_RE = /^(08|628)\d{8,12}$/
 
 export async function GET() {
-  const { error } = await requireAuth()
+  const { user, error } = await requireAuth()
   if (error) return error
 
-  const rows = await prisma.setting.findMany({ where: { key: { in: [...KEYS] } } })
+  // Reseller juga butuh akses (untuk render WhatsApp button) — scope ke tenantId mereka
+  if (!user.tenantId) {
+    return NextResponse.json({ error: "Forbidden", message: "Tenant context wajib" }, { status: 403 })
+  }
+
+  const rows = await prisma.setting.findMany({
+    where: { tenant_id: user.tenantId, key: { in: [...KEYS] } },
+  })
   const result: Record<ContactKey, string | null> = {
     whatsapp_number: null,
     whatsapp_topup_message: null,
@@ -22,8 +29,10 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = user.tenantId!
 
   let body: Partial<Record<ContactKey, string>>
   try {
@@ -65,9 +74,9 @@ export async function PUT(req: NextRequest) {
     await prisma.$transaction(
       updates.map(u =>
         prisma.setting.upsert({
-          where: { key: u.key },
+          where: { tenant_id_key: { tenant_id: tenantId, key: u.key } },
           update: { value: u.value, type: "string" },
-          create: { key: u.key, value: u.value, type: "string" },
+          create: { tenant_id: tenantId, key: u.key, value: u.value, type: "string" },
         })
       )
     )

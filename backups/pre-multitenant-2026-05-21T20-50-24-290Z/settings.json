@@ -1,0 +1,142 @@
+[
+  {
+    "id": "62745586-f313-487b-ac5b-7d9d16248b1f",
+    "key": "mikrotik_port",
+    "value": "8728",
+    "type": "number",
+    "updated_at": "2026-04-12T12:45:22.741Z"
+  },
+  {
+    "id": "70f1f3f2-f5bc-4c38-9519-22d82060b561",
+    "key": "mikrotik_password",
+    "value": "",
+    "type": "encrypted",
+    "updated_at": "2026-04-12T12:45:22.745Z"
+  },
+  {
+    "id": "b4e2ee31-fb02-46c3-9632-d2de0b2345bf",
+    "key": "backup_auto_enabled",
+    "value": "true",
+    "type": "string",
+    "updated_at": "2026-04-13T15:08:48.462Z"
+  },
+  {
+    "id": "58e98108-d56f-42dd-8b9c-0acadb3b0895",
+    "key": "backup_schedule",
+    "value": "daily",
+    "type": "string",
+    "updated_at": "2026-04-13T15:08:48.462Z"
+  },
+  {
+    "id": "baa9db76-028d-47bb-b50f-52f3415728fe",
+    "key": "backup_retention_days",
+    "value": "7",
+    "type": "string",
+    "updated_at": "2026-04-13T15:08:48.462Z"
+  },
+  {
+    "id": "1a74f25e-3a11-4f72-97e1-d6102071cbd9",
+    "key": "hotspot_login_url",
+    "value": "http://root.net/login",
+    "type": "string",
+    "updated_at": "2026-04-14T13:53:57.913Z"
+  },
+  {
+    "id": "fbc2d3a8-9790-47e8-a5aa-bc426f8bc204",
+    "key": "company_name",
+    "value": "Root.VCR",
+    "type": "string",
+    "updated_at": "2026-04-14T13:53:57.913Z"
+  },
+  {
+    "id": "95927622-ecda-45d3-86f5-210c1f61158b",
+    "key": "company_logo_url",
+    "value": "/uploads/logos/logo-1776151475428.png",
+    "type": "string",
+    "updated_at": "2026-04-14T13:53:57.913Z"
+  },
+  {
+    "id": "07e85f01-0510-4a38-833c-4a95d5245003",
+    "key": "mikrotik_host",
+    "value": "id-05.tunnel.web.id",
+    "type": "string",
+    "updated_at": "2026-05-21T10:37:35.858Z"
+  },
+  {
+    "id": "a0669237-5d3d-4c65-b642-5edde8fbfa90",
+    "key": "mikrotik_api_port",
+    "value": "9577",
+    "type": "string",
+    "updated_at": "2026-05-21T10:37:35.858Z"
+  },
+  {
+    "id": "34bf1ccb-7b3c-4154-8be4-83cd275be7a9",
+    "key": "mikrotik_user",
+    "value": "admin",
+    "type": "string",
+    "updated_at": "2026-05-21T10:37:35.858Z"
+  },
+  {
+    "id": "cf660c33-518f-4967-bf19-66a1f3c36be5",
+    "key": "mikrotik_pass",
+    "value": "K@nd@ngkud0",
+    "type": "string",
+    "updated_at": "2026-05-21T10:37:35.858Z"
+  },
+  {
+    "id": "eb8c5d9a-8ee4-4431-9feb-9f295e93a6c4",
+    "key": "whatsapp_number",
+    "value": "082211567800",
+    "type": "string",
+    "updated_at": "2026-05-21T10:04:23.784Z"
+  },
+  {
+    "id": "17b68847-122b-4ae9-84b5-8b4e9e155da8",
+    "key": "whatsapp_topup_message",
+    "value": "Halo Admin, saya mau topup saldo Rp {amount} untuk akun {email}",
+    "type": "string",
+    "updated_at": "2026-05-21T10:04:23.784Z"
+  },
+  {
+    "id": "f8843293-1303-4631-b9cf-5e4896c84841",
+    "key": "whatsapp_withdraw_message",
+    "value": "Halo Admin, saya mau withdraw saldo Rp {amount} untuk akun {email}",
+    "type": "string",
+    "updated_at": "2026-05-21T10:04:23.784Z"
+  },
+  {
+    "id": "6674f233-20ce-4215-a4a7-3f19769079d9",
+    "key": "voucher_prefix",
+    "value": "",
+    "type": "string",
+    "updated_at": "2026-05-21T13:01:12.875Z"
+  },
+  {
+    "id": "3ab4bcb0-d0e7-434d-81d0-efbdd71554c6",
+    "key": "voucher_code_length",
+    "value": "3",
+    "type": "string",
+    "updated_at": "2026-05-21T13:01:12.875Z"
+  },
+  {
+    "id": "82e8ebf0-b8ee-4884-9437-f0f5ce60f3f0",
+    "key": "voucher_code_format",
+    "value": "alphanumeric_upper",
+    "type": "string",
+    "updated_at": "2026-05-21T13:01:12.875Z"
+  },
+  {
+    "id": "b4fa7062-c429-47f2-9961-2ecc349ad7ec",
+    "key": "voucher_username_equals_password",
+    "value": "true",
+    "type": "string",
+    "updated_at": "2026-05-21T13:01:12.875Z"
+  },
+  {
+    "id": "80438ab3-af10-47c6-a6d8-f5fcc9b4ceb9",
+    "key": "voucher_password_prefix",
+    "value": "",
+    "type": "string",
+    "updated_at": "2026-05-21T13:01:12.875Z"
+  }
+]

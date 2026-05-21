@@ -1,0 +1,18 @@
+[
+  {
+    "id": "6524d94b-0abd-417b-8b53-c6d9e3c9a617",
+    "user_id": "cb9d9807-2ba5-4a64-bda2-fc2e9a8f55ba",
+    "balance": "126200",
+    "total_topup": "200000",
+    "total_spent": "73800",
+    "updated_at": "2026-04-17T10:03:51.442Z"
+  },
+  {
+    "id": "16b2743a-535c-4fba-ab68-ac96a284ad85",
+    "user_id": "d91df455-3490-4bd2-8977-531eab4c028a",
+    "balance": "421000",
+    "total_topup": "500000",
+    "total_spent": "79000",
+    "updated_at": "2026-04-18T09:04:31.435Z"
+  }
+]

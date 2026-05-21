@@ -4,10 +4,10 @@ import { testConnection } from "@/services/mikrotik.service"
 
 // GET /api/mikrotik/test — admin only
 export async function GET() {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
-  const result = await testConnection()
+  const result = await testConnection(user.tenantId!)
 
   return NextResponse.json(result, { status: result.ok ? 200 : 503 })
 }

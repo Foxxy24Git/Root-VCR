@@ -1,0 +1,47 @@
+[
+  {
+    "id": "d91df455-3490-4bd2-8977-531eab4c028a",
+    "email": "re@root.net",
+    "password_hash": "$2b$12$V00O3tq86tUnWGi9Y06yoe4COTsy6sDutKoeOhvsgljRnBJ4C1c0q",
+    "name": "reseeler",
+    "role": "reseller",
+    "phone": "",
+    "location": null,
+    "avatar_url": null,
+    "is_active": true,
+    "is_frozen": false,
+    "fee_percentage": "0",
+    "created_at": "2026-04-15T09:37:36.596Z",
+    "updated_at": "2026-04-15T09:37:36.596Z"
+  },
+  {
+    "id": "cb9d9807-2ba5-4a64-bda2-fc2e9a8f55ba",
+    "email": "re1@root.net",
+    "password_hash": "$2b$12$nTLOrd57TMTAKLWuM3bRF.3aJMZK6MtRUUtxwdLK1eTenpkMvzXlq",
+    "name": "reseler1",
+    "role": "reseller",
+    "phone": "",
+    "location": null,
+    "avatar_url": null,
+    "is_active": true,
+    "is_frozen": false,
+    "fee_percentage": "10",
+    "created_at": "2026-04-15T09:37:49.921Z",
+    "updated_at": "2026-04-16T09:59:58.961Z"
+  },
+  {
+    "id": "aa5900d1-9f2a-443e-a752-d093587bee54",
+    "email": "admin@root.vcr",
+    "password_hash": "$2b$12$0G9km92yRg48xdFlJMHfy.ZH6Yeq.r6.E/6U3b7HXXXniWnpRWlWu",
+    "name": "Super Admin",
+    "role": "admin",
+    "phone": "082288231533",
+    "location": null,
+    "avatar_url": null,
+    "is_active": true,
+    "is_frozen": false,
+    "fee_percentage": "0",
+    "created_at": "2026-04-12T12:45:23.059Z",
+    "updated_at": "2026-05-21T10:04:01.639Z"
+  }
+]

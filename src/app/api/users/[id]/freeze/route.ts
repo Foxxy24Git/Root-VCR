@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma"
 
 // PATCH /api/users/[id]/freeze — toggle freeze
 export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await requireAdmin()
+  const { user: sessionUser, error } = await requireAdmin()
   if (error) return error
 
-  const user = await prisma.user.findUnique({ where: { id: params.id } })
+  const user = await prisma.user.findFirst({
+    where: { id: params.id, tenant_id: sessionUser.tenantId! },
+  })
   if (!user) {
     return NextResponse.json({ error: "Not Found" }, { status: 404 })
   }

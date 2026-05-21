@@ -80,14 +80,12 @@ export interface ConnectionTestResult {
 
 export function parseSessionTimeout(timeout: string | undefined): { days: number; hours: number } {
   if (!timeout || timeout === "0s" || timeout === "none") return { days: 0, hours: 0 }
-  // Format: "1d", "1d12h", "24:00:00", "00:30:00"
   if (/^\d+d/.test(timeout)) {
     const days = parseInt(timeout)
     const hoursMatch = timeout.match(/(\d+)h/)
     const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0
     return { days: isNaN(days) ? 0 : days, hours }
   }
-  // HH:MM:SS format
   const parts = timeout.split(":")
   if (parts.length === 3) {
     const totalHours = parseInt(parts[0])
@@ -98,18 +96,21 @@ export function parseSessionTimeout(timeout: string | undefined): { days: number
   return { days: 0, hours: 0 }
 }
 
-export async function testConnection(): Promise<ConnectionTestResult> {
-  return testMikrotikConnection()
+export async function testConnection(tenantId: string): Promise<ConnectionTestResult> {
+  return testMikrotikConnection(tenantId)
 }
 
-export async function getHotspotProfiles(): Promise<HotspotProfile[]> {
-  return withMikrotik((api) =>
+export async function getHotspotProfiles(tenantId: string): Promise<HotspotProfile[]> {
+  return withMikrotik(tenantId, (api) =>
     api.menu("/ip/hotspot/user/profile").getAll() as Promise<HotspotProfile[]>
   )
 }
 
-export async function deleteHotspotProfile(profileId: string): Promise<{ success: boolean }> {
-  const client = await createMikrotikClient()
+export async function deleteHotspotProfile(
+  tenantId: string,
+  profileId: string
+): Promise<{ success: boolean }> {
+  const client = await createMikrotikClient(tenantId)
   const conn = await client.connect()
   try {
     const profiles = (await conn.menu("/ip/hotspot/user/profile").getAll()) as Array<Record<string, string | undefined>>
@@ -136,6 +137,7 @@ export async function deleteHotspotProfile(profileId: string): Promise<{ success
 }
 
 export async function createHotspotUser(
+  tenantId: string,
   code: string,
   password: string,
   mikrotikProfile: string
@@ -144,7 +146,7 @@ export async function createHotspotUser(
     throw new Error("mikrotik_profile tidak dikonfigurasi pada profil ini")
   }
 
-  const client = await createMikrotikClient()
+  const client = await createMikrotikClient(tenantId)
   try {
     const conn = await client.connect()
     const result = await conn.menu("/ip/hotspot/user").add({
@@ -164,14 +166,14 @@ export async function createHotspotUser(
   }
 }
 
-export async function getActiveUsers(): Promise<HotspotActive[]> {
-  return withMikrotik((api) =>
+export async function getActiveUsers(tenantId: string): Promise<HotspotActive[]> {
+  return withMikrotik(tenantId, (api) =>
     api.menu("/ip/hotspot/active").getAll() as Promise<HotspotActive[]>
   )
 }
 
-export async function deleteUser(code: string): Promise<void> {
-  await withMikrotik(async (api) => {
+export async function deleteUser(tenantId: string, code: string): Promise<void> {
+  await withMikrotik(tenantId, async (api) => {
     const users = (await api
       .menu("/ip/hotspot/user")
       .where("name", code)
@@ -184,8 +186,11 @@ export async function deleteUser(code: string): Promise<void> {
   })
 }
 
-export async function logoutHotspotUser(code: string): Promise<{ success: boolean; removed: number }> {
-  const client = await createMikrotikClient()
+export async function logoutHotspotUser(
+  tenantId: string,
+  code: string
+): Promise<{ success: boolean; removed: number }> {
+  const client = await createMikrotikClient(tenantId)
   const conn = await client.connect()
   try {
     console.log(`[MIKROTIK] logoutHotspotUser: START code="${code}"`)
@@ -215,8 +220,11 @@ export async function logoutHotspotUser(code: string): Promise<{ success: boolea
   }
 }
 
-export async function deleteHotspotCookie(code: string): Promise<{ success: boolean; removed: number }> {
-  const client = await createMikrotikClient()
+export async function deleteHotspotCookie(
+  tenantId: string,
+  code: string
+): Promise<{ success: boolean; removed: number }> {
+  const client = await createMikrotikClient(tenantId)
   const conn = await client.connect()
   try {
     console.log(`[MIKROTIK] deleteHotspotCookie: START code="${code}"`)
@@ -261,10 +269,6 @@ export interface VoucherSyncInput {
   code: string
 }
 
-/**
- * Parse RouterOS uptime/limit-uptime string (e.g. "1d2h30m10s", "45m", "3600s")
- * into total seconds. Returns 0 for empty or unparseable input.
- */
 function parseUptime(str: string | undefined): number {
   if (!str || str === "0s" || str === "") return 0
 
@@ -282,11 +286,6 @@ function parseUptime(str: string | undefined): number {
   return total
 }
 
-/**
- * Parses a Mikhmon comment date string (expire time) into a Date.
- * Mikhmon writes the expire time as: "jan/dd/yyyy hh:mm:ss"
- * Returns null if the comment doesn't match this format.
- */
 function parseMikrotikDate(str?: string): Date | null {
   if (!str) return null
   try {
@@ -307,21 +306,11 @@ function parseMikrotikDate(str?: string): Date | null {
   }
 }
 
-/**
- * Pure MikroTik function — no DB access.
- * Computes the correct status for each voucher based on
- * /ip/hotspot/active and /ip/hotspot/user (comment = expire time from Mikhmon).
- *
- * Priority:
- *   1. ACTIVE   — found in /ip/hotspot/active (realtime)
- *   2. EXPIRED  — comment parses to a date AND now > that date
- *   3. UNUSED   — no user record OR uptime == 0 (never logged in)
- *   4. INACTIVE — logged in before, currently offline, not expired
- */
 export async function computeVoucherStatuses(
+  tenantId: string,
   vouchers: VoucherSyncInput[]
 ): Promise<VoucherSyncResult[]> {
-  const client = await createMikrotikClient()
+  const client = await createMikrotikClient(tenantId)
   const conn = await client.connect()
   try {
     const [activeList, userList] = await Promise.all([
@@ -331,7 +320,6 @@ export async function computeVoucherStatuses(
 
     console.log("[computeVoucherStatuses] active:", activeList.length, "user:", userList.length)
 
-    // Build O(1) lookup maps (stringify keys — routeros-client may return numbers at runtime)
     const activeMap = new Map<string, HotspotActive>()
     for (const a of activeList) {
       const user = String(a.user ?? "")
@@ -342,7 +330,6 @@ export async function computeVoucherStatuses(
 
     const userMap = new Map<string, Record<string, string | undefined>>()
     for (const u of userList) {
-      // Stringify to handle routeros-client returning numeric names as JS numbers at runtime
       const name = String(u.name ?? "")
       if (name) userMap.set(name, u as Record<string, string | undefined>)
     }
@@ -352,7 +339,6 @@ export async function computeVoucherStatuses(
     return vouchers.map((v) => {
       const codeStr = String(v.code)
 
-      // 1. ACTIVE — highest priority
       const active = activeMap.get(codeStr)
       if (active) {
         console.log(`[computeVoucherStatuses] ${codeStr} → active, ip=${active.address}`)
@@ -371,19 +357,16 @@ export async function computeVoucherStatuses(
 
       console.log(`[computeVoucherStatuses] ${v.code} comment="${comment}" expireTime=${expireTime?.toISOString() ?? "null"}`)
 
-      // 2. EXPIRED — comment is Mikhmon expire date and it's in the past
       if (expireTime && now > expireTime) {
         console.log(`[computeVoucherStatuses] ${v.code} → expired (expire=${expireTime.toISOString()})`)
         return { code: v.code, status: "expired" as const, client_ip: null, client_mac: null }
       }
 
-      // 3. UNUSED — never logged in
       if (!userMt || uptimeSeconds === 0) {
         console.log(`[computeVoucherStatuses] ${v.code} → unused`)
         return { code: v.code, status: "unused" as const, client_ip: null, client_mac: null }
       }
 
-      // 4. INACTIVE — logged in before, currently offline, not expired
       console.log(`[computeVoucherStatuses] ${v.code} → inactive (${uptimeSeconds}s used)`)
       return { code: v.code, status: "inactive" as const, client_ip: null, client_mac: null }
     })
@@ -396,25 +379,20 @@ export async function computeVoucherStatuses(
 // PPPoE — real-time fetch from MikroTik
 // ─────────────────────────────────────────────────────────────
 
-export async function getPPPoESecrets(): Promise<PppoeSecret[]> {
-  return withMikrotik((api) =>
+export async function getPPPoESecrets(tenantId: string): Promise<PppoeSecret[]> {
+  return withMikrotik(tenantId, (api) =>
     api.menu("/ppp/secret").getAll() as Promise<PppoeSecret[]>
   )
 }
 
-export async function getPPPoEActive(): Promise<PppoeActive[]> {
-  return withMikrotik((api) =>
+export async function getPPPoEActive(tenantId: string): Promise<PppoeActive[]> {
+  return withMikrotik(tenantId, (api) =>
     api.menu("/ppp/active").getAll() as Promise<PppoeActive[]>
   )
 }
 
-/**
- * Fetch /ppp/secret + /ppp/active in one MikroTik session,
- * merge by username, and return a unified status payload.
- * Used by both the API route and the admin dashboard (SSR).
- */
-export async function getPPPoEStatus(): Promise<PppoeStatusResult> {
-  const [secrets, active] = await withMikrotik(async (api) => {
+export async function getPPPoEStatus(tenantId: string): Promise<PppoeStatusResult> {
+  const [secrets, active] = await withMikrotik(tenantId, async (api) => {
     const [s, a] = await Promise.all([
       api.menu("/ppp/secret").getAll() as Promise<PppoeSecret[]>,
       api.menu("/ppp/active").getAll() as Promise<PppoeActive[]>,

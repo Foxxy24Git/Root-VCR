@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/api-helpers"
+import { requireAuth, resolveTenantId } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateVoucherSchema } from "@/lib/validations/voucher"
 import { generateVoucherCode, calculateResellerPrice, generateRandomPassword } from "@/lib/utils"
 import { createHotspotUser } from "@/services/mikrotik.service"
 
 // POST /api/vouchers/generate
-// Admin: gratis (tidak potong wallet)
+// Tenant Admin: gratis (tidak potong wallet)
 // Reseller: potong wallet sesuai harga reseller
 export async function POST(req: NextRequest) {
   const { user, error } = await requireAuth()
   if (error) return error
+
+  const { tenantId, error: tenantErr } = resolveTenantId(user)
+  if (tenantErr) return tenantErr
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -27,8 +30,10 @@ export async function POST(req: NextRequest) {
 
   const { profileId, quantity } = parsed.data
 
-  // Ambil profile
-  const profile = await prisma.profile.findUnique({ where: { id: profileId, is_active: true } })
+  // Ambil profile (scoped ke tenant)
+  const profile = await prisma.profile.findFirst({
+    where: { id: profileId, tenant_id: tenantId, is_active: true },
+  })
   if (!profile) {
     return NextResponse.json({ error: "Not Found", message: "Profile tidak ditemukan" }, { status: 404 })
   }
@@ -36,7 +41,7 @@ export async function POST(req: NextRequest) {
   const basePrice = Number(profile.price)
 
   // Reseller: cek akses ke profile + saldo wallet
-  if (user.role === "reseller") {
+  if (user.role === "RESELLER") {
     const access = await prisma.resellerProfile.findUnique({
       where: { user_id_profile_id: { user_id: user.id, profile_id: profileId } },
     })
@@ -75,9 +80,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Ambil settings untuk kode format
+  // Ambil settings untuk kode format (tenant-scoped)
   const settings = await prisma.setting.findMany({
     where: {
+      tenant_id: tenantId,
       key: {
         in: [
           "voucher_prefix",
@@ -100,6 +106,7 @@ export async function POST(req: NextRequest) {
   const passwordPrefix = getSetting("voucher_password_prefix", "")
 
   // Generate kode unik (retry jika collision)
+  // NOTE: code @unique global, jadi check existing TIDAK di-scope tenant.
   const codes: string[] = []
   const existingCodes = new Set(
     (await prisma.voucher.findMany({ select: { code: true } })).map((v) => v.code)
@@ -113,7 +120,6 @@ export async function POST(req: NextRequest) {
     attempts++
   }
 
-  // Generate password per voucher jika usernameEqualsPassword=false
   const passwords: string[] = codes.map((code) =>
     usernameEqualsPassword ? code : passwordPrefix + generateRandomPassword(8)
   )
@@ -126,10 +132,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Hitung harga per voucher
-  // Admin: gratis (price_charged = 0, tidak potong wallet)
-  let priceCharged = user.role === "admin" ? 0 : basePrice
+  // Tenant Admin: gratis (price_charged = 0, tidak potong wallet)
+  let priceCharged = user.role === "TENANT_ADMIN" ? 0 : basePrice
   let feePercentage = 0
-  if (user.role === "reseller") {
+  if (user.role === "RESELLER") {
     const resellerData = await prisma.user.findUnique({
       where: { id: user.id },
       select: { fee_percentage: true },
@@ -142,7 +148,6 @@ export async function POST(req: NextRequest) {
 
   // Jalankan dalam satu transaksi DB
   const vouchers = await prisma.$transaction(async (tx) => {
-    // Buat semua voucher
     const created = await Promise.all(
       codes.map((code, i) => {
         console.log("INSERT DB:", code)
@@ -154,7 +159,8 @@ export async function POST(req: NextRequest) {
             profile_id: profileId,
             status: "unused",
             price_charged: priceCharged,
-            source: user.role === "admin" ? "admin" : "reseller",
+            source: user.role === "TENANT_ADMIN" ? "admin" : "reseller",
+            tenant_id: tenantId,
           },
           select: {
             id: true, code: true, status: true, price_charged: true,
@@ -166,7 +172,7 @@ export async function POST(req: NextRequest) {
     )
 
     // Potong wallet reseller
-    if (user.role === "reseller" && totalCost > 0) {
+    if (user.role === "RESELLER" && totalCost > 0) {
       const wallet = await tx.wallet.findUnique({ where: { user_id: user.id } })
       if (!wallet) throw new Error("Wallet tidak ditemukan")
 
@@ -190,6 +196,7 @@ export async function POST(req: NextRequest) {
           balance_after:  balanceAfter,
           description:    `Generate ${quantity}x ${profile.name}`,
           reference_id:   created[0].id,
+          tenant_id:      tenantId,
         },
       })
     }
@@ -197,19 +204,17 @@ export async function POST(req: NextRequest) {
     return created
   })
 
-  // Validate mikrotik_profile is set before syncing
   if (!profile.mikrotik_profile) {
     console.error("MIKROTIK ERROR: mikrotik_profile kosong untuk profile", profile.name)
   }
 
-  // Sync ke MikroTik (best-effort — tidak gagalkan request jika MikroTik unreachable)
+  // Sync ke MikroTik (best-effort)
   const syncResults = await Promise.allSettled(
     vouchers.map((v, i) =>
-      createHotspotUser(v.code, passwords[i], profile.mikrotik_profile)
+      createHotspotUser(tenantId, v.code, passwords[i], profile.mikrotik_profile)
     )
   )
 
-  // Update mikrotik_synced=true untuk voucher yang berhasil disync
   const syncedIds: string[] = []
   syncResults.forEach((result, i) => {
     if (result.status === "fulfilled") {
@@ -221,10 +226,9 @@ export async function POST(req: NextRequest) {
 
   if (syncedIds.length > 0) {
     await prisma.voucher.updateMany({
-      where: { id: { in: syncedIds } },
+      where: { id: { in: syncedIds }, tenant_id: tenantId },
       data: { mikrotik_synced: true },
     })
-    // Patch local voucher objects so response reflects actual state
     syncedIds.forEach((id) => {
       const v = vouchers.find((x) => x.id === id)
       if (v) (v as typeof v & { mikrotik_synced: boolean }).mikrotik_synced = true
@@ -233,7 +237,6 @@ export async function POST(req: NextRequest) {
 
   const syncFailed = syncResults.filter((r) => r.status === "rejected").length
 
-  // Attach password to each voucher in the response
   const vouchersWithPassword = vouchers.map((v, i) => ({
     ...v,
     password: usernameEqualsPassword ? null : passwords[i],
@@ -246,7 +249,7 @@ export async function POST(req: NextRequest) {
         quantity,
         profile_name: profile.name,
         price_per_voucher: priceCharged,
-        total_cost: user.role === "reseller" ? totalCost : 0,
+        total_cost: user.role === "RESELLER" ? totalCost : 0,
         fee_percentage: feePercentage,
         mikrotik_synced: syncedIds.length,
         mikrotik_failed: syncFailed,

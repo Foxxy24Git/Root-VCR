@@ -19,18 +19,18 @@ export default async function AdminResellersPage() {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
+  const tenantId = user.tenantId!
+
   const [users, allProfiles] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "reseller" },
+      where: { tenant_id: tenantId, role: "RESELLER" },
       orderBy: { created_at: "desc" },
-      select: {
-        id: true, name: true, email: true, phone: true, avatar_url: true,
-        fee_percentage: true, is_active: true, is_frozen: true, created_at: true,
+      include: {
         wallet: { select: { balance: true, total_spent: true } },
       },
     }),
     prisma.profile.findMany({
-      where: { is_active: true },
+      where: { tenant_id: tenantId, is_active: true },
       orderBy: { price: "asc" },
       select: { id: true, name: true, price: true },
     }),

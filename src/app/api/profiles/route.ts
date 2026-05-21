@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth } from "@/lib/api-helpers"
+import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { createProfileSchema } from "@/lib/validations/profile"
 
-// GET /api/profiles — semua role bisa lihat
+// GET /api/profiles — semua role bisa lihat (scoped tenant)
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { user, error } = await requireAuth()
   if (error) return error
+
+  const { tenantId, error: tenantErr } = resolveTenantId(user)
+  if (tenantErr) return tenantErr
 
   const { searchParams } = req.nextUrl
   const activeOnly = searchParams.get("active") !== "false"
 
   const profiles = await prisma.profile.findMany({
-    where: activeOnly ? { is_active: true } : {},
+    where: {
+      tenant_id: tenantId,
+      ...(activeOnly ? { is_active: true } : {}),
+    },
     orderBy: { price: "asc" },
     select: {
       id: true,
@@ -33,8 +39,10 @@ export async function GET(req: NextRequest) {
 
 // POST /api/profiles — admin only
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = user.tenantId!
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -53,6 +61,7 @@ export async function POST(req: NextRequest) {
     data: {
       ...parsed.data,
       price: parsed.data.price,
+      tenant_id: tenantId,
     },
     select: {
       id: true, name: true, duration_days: true, duration_hours: true,

@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 
-// GET /api/settings -> retrieves all settings as a key-value pair object
+// GET /api/settings -> retrieves all settings as a key-value pair object (scoped to tenant)
 export async function GET() {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
-  const rows = await prisma.setting.findMany()
+  const tenantId = user.tenantId!
+  const rows = await prisma.setting.findMany({ where: { tenant_id: tenantId } })
   const settings: Record<string, string | null> = {}
-  
+
   rows.forEach(r => {
     settings[r.key] = r.value
   })
@@ -19,12 +20,14 @@ export async function GET() {
 
 // POST /api/settings -> Updates settings via an array of {key, value} objects
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
+  const tenantId = user.tenantId!
+
   let body: { updates: { key: string, value: string }[] }
-  try { 
-    body = await req.json() 
+  try {
+    body = await req.json()
   } catch {
     return NextResponse.json({ error: "Bad Request", message: "Body tidak valid" }, { status: 400 })
   }
@@ -35,11 +38,11 @@ export async function POST(req: NextRequest) {
 
   try {
     await prisma.$transaction(
-      body.updates.map((update) => 
+      body.updates.map((update) =>
         prisma.setting.upsert({
-          where: { key: update.key },
+          where: { tenant_id_key: { tenant_id: tenantId, key: update.key } },
           update: { value: update.value, type: "string" },
-          create: { key: update.key, value: update.value, type: "string" }
+          create: { tenant_id: tenantId, key: update.key, value: update.value, type: "string" },
         })
       )
     )

@@ -3,22 +3,26 @@ import { requireAdmin, paginate } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { createUserSchema } from "@/lib/validations/user"
 import bcrypt from "bcryptjs"
+import type { Role } from "@prisma/client"
 
-// GET /api/users — list semua users (admin only)
+// GET /api/users — list users in current tenant (tenant admin only)
 export async function GET(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = user.tenantId!
 
   const { searchParams } = req.nextUrl
   const page = parseInt(searchParams.get("page") ?? "1")
   const limit = parseInt(searchParams.get("limit") ?? "20")
-  const role = searchParams.get("role") // "admin" | "reseller" | null
+  const roleParam = searchParams.get("role") // "TENANT_ADMIN" | "RESELLER" | null
   const search = searchParams.get("search") ?? ""
 
   const { take, skip } = paginate(page, limit)
 
   const where = {
-    ...(role ? { role: role as "admin" | "reseller" } : {}),
+    tenant_id: tenantId,
+    ...(roleParam ? { role: roleParam as Role } : {}),
     ...(search
       ? {
           OR: [
@@ -62,10 +66,12 @@ export async function GET(req: NextRequest) {
   })
 }
 
-// POST /api/users — buat reseller baru (admin only)
+// POST /api/users — buat reseller baru (tenant admin only)
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
+
+  const tenantId = user.tenantId!
 
   let body: unknown
   try {
@@ -84,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   const { email, password, name, phone, location, fee_percentage } = parsed.data
 
-  // Cek email sudah ada
+  // Cek email sudah ada (email @unique global)
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     return NextResponse.json(
@@ -95,8 +101,8 @@ export async function POST(req: NextRequest) {
 
   const password_hash = await bcrypt.hash(password, 12)
 
-  const user = await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
+  const newUser = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
       data: {
         email,
         password_hash,
@@ -104,7 +110,8 @@ export async function POST(req: NextRequest) {
         phone: phone ?? null,
         location: location ?? null,
         fee_percentage: fee_percentage ?? 0,
-        role: "reseller",
+        role: "RESELLER",
+        tenant_id: tenantId,
       },
       select: {
         id: true,
@@ -122,11 +129,17 @@ export async function POST(req: NextRequest) {
 
     // Auto-create wallet untuk reseller baru
     await tx.wallet.create({
-      data: { user_id: newUser.id, balance: 0, total_topup: 0, total_spent: 0 },
+      data: {
+        user_id: created.id,
+        balance: 0,
+        total_topup: 0,
+        total_spent: 0,
+        tenant_id: tenantId,
+      },
     })
 
-    return newUser
+    return created
   })
 
-  return NextResponse.json({ user }, { status: 201 })
+  return NextResponse.json({ user: newUser }, { status: 201 })
 }

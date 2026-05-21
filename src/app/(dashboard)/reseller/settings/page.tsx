@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function SettingsPage() {
   const sessionUser = await getSessionUser()
-  if (!sessionUser || sessionUser.role !== "reseller") {
+  if (!sessionUser || sessionUser.role !== "RESELLER") {
     redirect("/login")
   }
 

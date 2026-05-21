@@ -15,7 +15,7 @@ export const metadata = {
 
 export default async function ResellerDashboard() {
   const user = await getSessionUser()
-  if (!user || user.role !== "reseller") {
+  if (!user || user.role !== "RESELLER") {
     redirect("/login")
   }
 

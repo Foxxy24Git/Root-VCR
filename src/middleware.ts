@@ -4,19 +4,33 @@ import { NextResponse } from "next/server"
 
 const { auth } = NextAuth(authConfig)
 
+// Map dari role ke dashboard path default (untuk auto-redirect post-login).
+function defaultDashboardFor(role: string | undefined): string {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "/super-admin/dashboard"
+    case "TENANT_ADMIN":
+      return "/admin/dashboard"
+    case "RESELLER":
+      return "/reseller/dashboard"
+    default:
+      return "/login"
+  }
+}
+
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
 
   // ── Public routes ────────────────────────────────────────────
-  const isLoginPage = pathname === "/login"
+  const isLoginPage =
+    pathname === "/login" || pathname === "/super-admin/login"
   const isNextAuthRoute = pathname.startsWith("/api/auth")
 
   if (isLoginPage || isNextAuthRoute) {
-    // Logged-in user hitting /login → redirect to their dashboard
+    // Logged-in user hitting any login page → redirect ke dashboard sesuai role
     if (isLoginPage && session) {
-      const dest =
-        session.user.role === "admin" ? "/admin/dashboard" : "/reseller/dashboard"
+      const dest = defaultDashboardFor(session.user?.role)
       return NextResponse.redirect(new URL(dest, req.url))
     }
     return NextResponse.next()
@@ -24,44 +38,92 @@ export default auth((req) => {
 
   // ── Require authentication ────────────────────────────────────
   if (!session) {
-    // API routes → 401 JSON (no redirect)
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         { error: "Unauthorized", message: "Session diperlukan" },
         { status: 401 }
       )
     }
-    // Page routes → redirect ke login
-    const loginUrl = new URL("/login", req.url)
+    // Super-admin area redirect ke super-admin login, lainnya ke /login
+    const loginPath = pathname.startsWith("/super-admin")
+      ? "/super-admin/login"
+      : "/login"
+    const loginUrl = new URL(loginPath, req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  const { role } = session.user
+  const role = session.user?.role
+  const tenantId = session.user?.tenantId ?? null
 
-  // ── Role-based access ─────────────────────────────────────────
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    if (role !== "admin") {
+  // ── SUPER ADMIN area ──────────────────────────────────────────
+  if (
+    pathname.startsWith("/super-admin") ||
+    pathname.startsWith("/api/super-admin")
+  ) {
+    if (role !== "SUPER_ADMIN") {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json(
-          { error: "Forbidden", message: "Hanya admin yang bisa mengakses" },
+          { error: "Forbidden", message: "Hanya Super Admin yang bisa mengakses" },
           { status: 403 }
         )
       }
-      return NextResponse.redirect(new URL("/reseller/dashboard", req.url))
+      return NextResponse.redirect(
+        new URL(defaultDashboardFor(role), req.url)
+      )
     }
+    return NextResponse.next()
   }
 
-  if (pathname.startsWith("/reseller") || pathname.startsWith("/api/reseller")) {
-    if (role !== "reseller") {
+  // ── TENANT ADMIN area ─────────────────────────────────────────
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    if (role !== "TENANT_ADMIN") {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json(
-          { error: "Forbidden", message: "Hanya reseller yang bisa mengakses" },
+          { error: "Forbidden", message: "Hanya Tenant Admin yang bisa mengakses" },
           { status: 403 }
         )
       }
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url))
+      return NextResponse.redirect(
+        new URL(defaultDashboardFor(role), req.url)
+      )
     }
+    // Tenant Admin wajib punya tenantId (defensive)
+    if (!tenantId) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Forbidden", message: "Tenant context wajib" },
+          { status: 403 }
+        )
+      }
+      return NextResponse.redirect(new URL("/login", req.url))
+    }
+    return NextResponse.next()
+  }
+
+  // ── RESELLER area ─────────────────────────────────────────────
+  if (pathname.startsWith("/reseller") || pathname.startsWith("/api/reseller")) {
+    if (role !== "RESELLER") {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Forbidden", message: "Hanya Reseller yang bisa mengakses" },
+          { status: 403 }
+        )
+      }
+      return NextResponse.redirect(
+        new URL(defaultDashboardFor(role), req.url)
+      )
+    }
+    if (!tenantId) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Forbidden", message: "Tenant context wajib" },
+          { status: 403 }
+        )
+      }
+      return NextResponse.redirect(new URL("/login", req.url))
+    }
+    return NextResponse.next()
   }
 
   return NextResponse.next()

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/api-helpers"
+import { requireAuth, resolveTenantId } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 
 // Helper: convert Node.js Buffer to a BodyInit-compatible ArrayBuffer
@@ -11,9 +11,15 @@ export async function GET(req: NextRequest) {
   const { user, error } = await requireAuth()
   if (error) return error
 
+  const { tenantId, error: tenantErr } = resolveTenantId(user)
+  if (tenantErr) return tenantErr
+
   const format = req.nextUrl.searchParams.get("format")
 
-  const where = user.role === "reseller" ? { user_id: user.id } : {}
+  const where = {
+    tenant_id: tenantId,
+    ...(user.role === "RESELLER" ? { user_id: user.id } : {}),
+  }
 
   const vouchers = await prisma.voucher.findMany({
     where,

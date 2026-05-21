@@ -13,7 +13,11 @@ export default async function LoginPage() {
   const session = await auth()
   if (session?.user) {
     const dest =
-      session.user.role === "admin" ? "/admin/dashboard" : "/reseller/dashboard"
+      session.user.role === "SUPER_ADMIN"
+        ? "/super-admin/dashboard"
+        : session.user.role === "TENANT_ADMIN"
+        ? "/admin/dashboard"
+        : "/reseller/dashboard"
     redirect(dest)
   }
 

@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/api-helpers"
 import { deleteHotspotCookie } from "@/services/mikrotik.service"
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
   let code: string
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await deleteHotspotCookie(code)
+    const result = await deleteHotspotCookie(user.tenantId!, code)
     console.log(`[API] /mikrotik/remove-cookie code="${code}" result=`, result)
     return NextResponse.json({
       success: result.success,

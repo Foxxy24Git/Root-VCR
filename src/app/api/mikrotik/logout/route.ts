@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/api-helpers"
 import { logoutHotspotUser } from "@/services/mikrotik.service"
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAdmin()
+  const { user, error } = await requireAdmin()
   if (error) return error
 
   let code: string
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await logoutHotspotUser(code)
+    const result = await logoutHotspotUser(user.tenantId!, code)
     console.log(`[API] /mikrotik/logout code="${code}" result=`, result)
     return NextResponse.json({
       success: result.success,

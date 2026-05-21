@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server"
-import { requireAuth } from "@/lib/api-helpers"
+import { requireReseller } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { withMikrotik } from "@/lib/mikrotik"
 import { HotspotActive } from "@/services/mikrotik.service"
 
 export async function GET() {
-  const { user, error } = await requireAuth()
+  const { user, error } = await requireReseller()
   if (error) return error
 
-  if (user.role !== "reseller") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const tenantId = user.tenantId!
 
   // Get all voucher codes belonging to this reseller
   const vouchers = await prisma.voucher.findMany({
-    where: { user_id: user.id },
+    where: { user_id: user.id, tenant_id: tenantId },
     select: { code: true },
   })
   const voucherCodes = new Set(vouchers.map((v) => v.code))
@@ -22,7 +20,7 @@ export async function GET() {
   // Get real-time active users from MikroTik
   let activeList: HotspotActive[] = []
   try {
-    activeList = await withMikrotik((api) =>
+    activeList = await withMikrotik(tenantId, (api) =>
       api.menu("/ip/hotspot/active").getAll() as Promise<HotspotActive[]>
     )
   } catch (e) {
@@ -30,7 +28,6 @@ export async function GET() {
     return NextResponse.json({ error: "Gagal terhubung ke MikroTik" }, { status: 503 })
   }
 
-  // Filter to only this reseller's vouchers
   const resellerActiveUsers = activeList
     .filter((u) => voucherCodes.has(u.user))
     .map((u) => ({

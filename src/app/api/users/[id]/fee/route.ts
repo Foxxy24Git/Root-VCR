@@ -9,7 +9,7 @@ const feeSchema = z.object({
 
 // PATCH /api/users/[id]/fee — set fee percentage
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await requireAdmin()
+  const { user: sessionUser, error } = await requireAdmin()
   if (error) return error
 
   let body: unknown
@@ -22,7 +22,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Validation Error", issues: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const user = await prisma.user.findUnique({ where: { id: params.id } })
+  const user = await prisma.user.findFirst({
+    where: { id: params.id, tenant_id: sessionUser.tenantId! },
+  })
   if (!user) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   const updated = await prisma.user.update({

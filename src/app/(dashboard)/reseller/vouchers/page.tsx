@@ -21,7 +21,7 @@ export default async function VoucherManagementPage({
   }
 }) {
   const user = await getSessionUser()
-  if (!user || user.role !== "reseller") {
+  if (!user || user.role !== "RESELLER") {
     redirect("/login")
   }
 

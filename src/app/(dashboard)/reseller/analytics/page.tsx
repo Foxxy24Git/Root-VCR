@@ -13,7 +13,7 @@ export default async function AnalyticsPage({
   searchParams: { period?: string }
 }) {
   const user = await getSessionUser()
-  if (!user || user.role !== "reseller") {
+  if (!user || user.role !== "RESELLER") {
     redirect("/login")
   }
 
