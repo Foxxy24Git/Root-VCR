@@ -38,12 +38,21 @@ interface Voucher {
   password?: string | null
 }
 
-interface PppoeUser {
-  id: string
-  username: string
-  profile: string | null
-  status: string
-  last_seen: string | null
+interface PppoeUserStatus {
+  name: string
+  profile: string
+  service: string
+  status: "online" | "offline"
+  caller_id: string | null
+  address: string | null
+  uptime: string | null
+}
+
+interface PppoeApiResponse {
+  total: number
+  online: number
+  offline: number
+  users: PppoeUserStatus[]
 }
 
 interface VoucherAdminTabsProps {
@@ -51,7 +60,6 @@ interface VoucherAdminTabsProps {
   vouchers: Voucher[]
   totalVouchers: number
   currentPage: number
-  pppoeUsers: PppoeUser[]
   searchFilter?: string
   statusFilter?: string
   profileFilter?: string
@@ -561,50 +569,103 @@ function AllVouchers({
 
 // ── PPPoE Management Tab ─────────────────────────────────────────────────────
 
-function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-  const [syncing, setSyncing] = useState(false)
-  const [syncMsg, setSyncMsg] = useState<string | null>(null)
+function PppoeStatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number | string
+  tone: "default" | "online" | "offline"
+}) {
+  const accent =
+    tone === "online"
+      ? "text-green-600 dark:text-green-400"
+      : tone === "offline"
+      ? "text-slate-500 dark:text-slate-400"
+      : "text-slate-900 dark:text-slate-100"
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
+    </div>
+  )
+}
 
-  const handleSync = async () => {
-    setSyncing(true)
-    setSyncMsg(null)
+function PppoeManagement() {
+  const [data, setData] = useState<PppoeApiResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchData = useCallback(async (showSpinner: boolean) => {
+    if (showSpinner) setRefreshing(true)
     try {
-      const res = await fetch("/api/mikrotik/sync", { method: "POST" })
-      const data = await res.json()
-      setSyncMsg(res.ok ? data.message : (data.message || "Sync gagal"))
-      if (res.ok) startTransition(() => router.refresh())
-    } catch {
-      setSyncMsg("Gagal terhubung ke server")
+      const res = await fetch("/api/mikrotik/pppoe", { cache: "no-store" })
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}))
+        throw new Error(payload?.message || `Gagal memuat data (${res.status})`)
+      }
+      const json = (await res.json()) as PppoeApiResponse
+      setData(json)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat data PPPoE")
     } finally {
-      setSyncing(false)
+      setLoading(false)
+      setRefreshing(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchData(false)
+    const id = setInterval(() => fetchData(false), 30_000)
+    return () => clearInterval(id)
+  }, [fetchData])
+
+  const users = data?.users ?? []
+  const total = data?.total ?? 0
+  const online = data?.online ?? 0
+  const offline = data?.offline ?? 0
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <p className="text-sm text-slate-500 dark:text-slate-400">Data user PPPoE dari MikroTik.</p>
-        <div className="flex items-center gap-3">
-          {syncMsg && <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/30 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600">{syncMsg}</p>}
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-            Sync PPPoE
-          </button>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Data user PPPoE real-time dari MikroTik. Auto-refresh tiap 30 detik.</p>
+        <button
+          onClick={() => fetchData(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shrink-0"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl">
+          {error}
         </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <PppoeStatCard label="Total Users" value={loading && !data ? "—" : total} tone="default" />
+        <PppoeStatCard label="Online" value={loading && !data ? "—" : online} tone="online" />
+        <PppoeStatCard label="Offline" value={loading && !data ? "—" : offline} tone="offline" />
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors duration-200">
-        {pppoeUsers.length === 0 ? (
+        {loading && !data ? (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-10 rounded-lg bg-slate-100 dark:bg-slate-700/40 animate-pulse" />
+            ))}
+          </div>
+        ) : users.length === 0 ? (
           <div className="py-12 text-center text-slate-500 dark:text-slate-400 px-4">
             <Wifi className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="font-medium text-slate-900 dark:text-slate-100">Belum ada data PPPoE</p>
-            <p className="text-sm mt-1">Klik Sync PPPoE untuk mengambil data dari MikroTik.</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">Tidak ada user PPPoE</p>
+            <p className="text-sm mt-1">Belum ada user PPPoE terdaftar di MikroTik.</p>
           </div>
         ) : (
           <>
@@ -616,25 +677,29 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
                     <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Username</th>
                     <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Profile</th>
                     <th className="px-6 py-4 text-center font-semibold uppercase tracking-wider text-xs">Status</th>
-                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Last Seen</th>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">IP Address</th>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Uptime</th>
+                    <th className="px-6 py-4 text-left font-semibold uppercase tracking-wider text-xs">Caller ID</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {pppoeUsers.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">{u.username}</td>
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{u.profile ?? "-"}</td>
+                  {users.map(u => (
+                    <tr key={u.name} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">{u.name}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{u.profile || "-"}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          u.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          u.status === "online"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                         }`}>
-                          {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                          {u.status}
+                          <span className={`w-1.5 h-1.5 rounded-full ${u.status === "online" ? "bg-green-500" : "bg-slate-400"}`} />
+                          {u.status === "online" ? "Online" : "Offline"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs">
-                        {u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "-"}
-                      </td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono text-xs">{u.address || "-"}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-xs">{u.uptime || "-"}</td>
+                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">{u.caller_id || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -642,19 +707,27 @@ function PppoeManagement({ pppoeUsers }: { pppoeUsers: PppoeUser[] }) {
             </div>
             {/* Mobile cards */}
             <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
-              {pppoeUsers.map(u => (
-                <div key={u.id} className="p-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">{u.username}</p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      u.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+              {users.map(u => (
+                <div key={u.name} className="p-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{u.name}</p>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      u.status === "online"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
                     }`}>
-                      {u.status === "active" ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                      {u.status}
+                      <span className={`w-1.5 h-1.5 rounded-full ${u.status === "online" ? "bg-green-500" : "bg-slate-400"}`} />
+                      {u.status === "online" ? "Online" : "Offline"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{u.profile ?? "-"}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{u.last_seen ? new Date(u.last_seen).toLocaleString("id-ID") : "Belum terlihat"}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Profile: {u.profile || "-"}</p>
+                  {u.status === "online" && (
+                    <div className="mt-1.5 grid grid-cols-2 gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <p>IP: <span className="font-mono">{u.address || "-"}</span></p>
+                      <p>Uptime: {u.uptime || "-"}</p>
+                      <p className="col-span-2">Caller: <span className="font-mono">{u.caller_id || "-"}</span></p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -672,7 +745,6 @@ export function VoucherAdminTabs({
   vouchers,
   totalVouchers,
   currentPage,
-  pppoeUsers,
   searchFilter,
   statusFilter,
   profileFilter,
@@ -717,7 +789,7 @@ export function VoucherAdminTabs({
           profileFilter={profileFilter}
         />
       )}
-      {activeTab === "pppoe" && <PppoeManagement pppoeUsers={pppoeUsers} />}
+      {activeTab === "pppoe" && <PppoeManagement />}
     </div>
   )
 }

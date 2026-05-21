@@ -38,7 +38,7 @@ export default async function AdminVouchersPage({
     ]
   }
 
-  const [profiles, vouchers, totalVouchers, pppoeUsers] = await Promise.all([
+  const [profiles, vouchers, totalVouchers] = await Promise.all([
     prisma.profile.findMany({ orderBy: { price: "asc" } }),
     prisma.voucher.findMany({
       where: whereCondition,
@@ -51,7 +51,6 @@ export default async function AdminVouchersPage({
       },
     }),
     prisma.voucher.count({ where: whereCondition }),
-    prisma.pppoeUser.findMany({ orderBy: { synced_at: "desc" }, take: 100 }),
   ])
 
   const mappedProfiles = profiles.map(p => ({
@@ -80,14 +79,6 @@ export default async function AdminVouchersPage({
     password: v.password ?? null,
   }))
 
-  const mappedPppoe = pppoeUsers.map(u => ({
-    id: u.id,
-    username: u.username,
-    profile: u.profile,
-    status: u.status,
-    last_seen: u.last_seen?.toISOString() ?? null,
-  }))
-
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20 md:pb-0">
       <div>
@@ -100,7 +91,6 @@ export default async function AdminVouchersPage({
         vouchers={mappedVouchers}
         totalVouchers={totalVouchers}
         currentPage={page}
-        pppoeUsers={mappedPppoe}
         searchFilter={searchFilter}
         statusFilter={statusFilter}
         profileFilter={profileFilter}

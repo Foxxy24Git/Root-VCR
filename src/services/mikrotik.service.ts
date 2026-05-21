@@ -34,6 +34,44 @@ export interface HotspotCookie {
   [key: string]: string | undefined
 }
 
+export interface PppoeSecret {
+  ".id"?: string
+  id?: string
+  name: string
+  profile?: string
+  service?: string
+  comment?: string
+  [key: string]: string | undefined
+}
+
+export interface PppoeActive {
+  ".id"?: string
+  id?: string
+  name: string
+  "caller-id"?: string
+  address?: string
+  uptime?: string
+  service?: string
+  [key: string]: string | undefined
+}
+
+export interface PppoeUserStatus {
+  name: string
+  profile: string
+  service: string
+  status: "online" | "offline"
+  caller_id: string | null
+  address: string | null
+  uptime: string | null
+}
+
+export interface PppoeStatusResult {
+  total: number
+  online: number
+  offline: number
+  users: PppoeUserStatus[]
+}
+
 export interface ConnectionTestResult {
   ok: boolean
   error?: string
@@ -351,5 +389,66 @@ export async function computeVoucherStatuses(
     })
   } finally {
     await client.disconnect().catch(() => {})
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PPPoE — real-time fetch from MikroTik
+// ─────────────────────────────────────────────────────────────
+
+export async function getPPPoESecrets(): Promise<PppoeSecret[]> {
+  return withMikrotik((api) =>
+    api.menu("/ppp/secret").getAll() as Promise<PppoeSecret[]>
+  )
+}
+
+export async function getPPPoEActive(): Promise<PppoeActive[]> {
+  return withMikrotik((api) =>
+    api.menu("/ppp/active").getAll() as Promise<PppoeActive[]>
+  )
+}
+
+/**
+ * Fetch /ppp/secret + /ppp/active in one MikroTik session,
+ * merge by username, and return a unified status payload.
+ * Used by both the API route and the admin dashboard (SSR).
+ */
+export async function getPPPoEStatus(): Promise<PppoeStatusResult> {
+  const [secrets, active] = await withMikrotik(async (api) => {
+    const [s, a] = await Promise.all([
+      api.menu("/ppp/secret").getAll() as Promise<PppoeSecret[]>,
+      api.menu("/ppp/active").getAll() as Promise<PppoeActive[]>,
+    ])
+    return [s, a] as const
+  })
+
+  const activeMap = new Map<string, PppoeActive>()
+  for (const a of active) {
+    const name = String(a.name ?? "")
+    if (name) activeMap.set(name, a)
+  }
+
+  const users: PppoeUserStatus[] = secrets.map((s) => {
+    const name = String(s.name ?? "")
+    const a = activeMap.get(name)
+    const isOnline = !!a
+    return {
+      name,
+      profile: s.profile ?? "",
+      service: s.service ?? "pppoe",
+      status: isOnline ? "online" : "offline",
+      caller_id: a?.["caller-id"] ?? null,
+      address: a?.address ?? null,
+      uptime: a?.uptime ?? null,
+    }
+  })
+
+  const online = users.filter((u) => u.status === "online").length
+
+  return {
+    total: users.length,
+    online,
+    offline: users.length - online,
+    users,
   }
 }

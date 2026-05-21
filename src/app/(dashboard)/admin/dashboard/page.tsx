@@ -2,11 +2,12 @@ import { requireAdmin } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { StatsCard } from "@/components/cards/StatsCard"
-import { Users, Ticket, WalletIcon, Activity, ArrowUpRight } from "lucide-react"
+import { Users, Ticket, WalletIcon, Activity, ArrowUpRight, Wifi } from "lucide-react"
 import { AdminRevenueChart } from "./AdminRevenueChart"
 import Link from "next/link"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { AdminPrintVoucherForm } from "./AdminPrintVoucherForm"
+import { getPPPoEStatus } from "@/services/mikrotik.service"
 
 export const metadata = {
   title: "Admin Dashboard — Root.VCR",
@@ -90,6 +91,20 @@ export default async function AdminDashboardPage() {
     include: { user: { select: { name: true, email: true, avatar_url: true } } }
   })
 
+  // PPPoE — degrade gracefully if MikroTik is unreachable so the dashboard still renders.
+  let pppoeOnline: number | null = null
+  let pppoeTotal: number | null = null
+  try {
+    const pppoe = await getPPPoEStatus()
+    pppoeOnline = pppoe.online
+    pppoeTotal = pppoe.total
+  } catch (err) {
+    console.error("[AdminDashboard] PPPoE fetch failed:", err)
+  }
+  const pppoeValue = pppoeOnline === null || pppoeTotal === null
+    ? "—"
+    : `${pppoeOnline} / ${pppoeTotal}`
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20 md:pb-0 animate-slide-up">
       <div>
@@ -97,7 +112,7 @@ export default async function AdminDashboardPage() {
         <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm sm:text-base">Ringkasan sistem dan performa keseluruhan.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stagger">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 stagger">
         <Link href="/voucher/semua" className="block animate-slide-up hover:scale-[1.02] transition-transform">
           <StatsCard
             title="Voucher (Hari Ini)"
@@ -131,6 +146,15 @@ export default async function AdminDashboardPage() {
             value={activeResellers.toLocaleString("id-ID")}
             icon={Users}
             iconClassName="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+            className="cursor-pointer"
+          />
+        </Link>
+        <Link href="/admin/vouchers?tab=pppoe" className="block animate-slide-up hover:scale-[1.02] transition-transform">
+          <StatsCard
+            title="PPPoE Online"
+            value={pppoeValue}
+            icon={Wifi}
+            iconClassName="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
             className="cursor-pointer"
           />
         </Link>
