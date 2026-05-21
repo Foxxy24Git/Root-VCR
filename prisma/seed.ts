@@ -21,6 +21,9 @@ async function main() {
     { key: "mikrotik_port", value: "8728", type: "number" },
     { key: "mikrotik_user", value: "", type: "string" },
     { key: "mikrotik_password", value: "", type: "encrypted" },
+    { key: "whatsapp_number", value: "0822882231533", type: "string" },
+    { key: "whatsapp_topup_message", value: "Halo Admin, saya mau topup saldo Rp {amount} untuk akun {email}", type: "string" },
+    { key: "whatsapp_withdraw_message", value: "Halo Admin, saya mau withdraw saldo Rp {amount} untuk akun {email}", type: "string" },
   ]
 
   for (const s of settings) {
