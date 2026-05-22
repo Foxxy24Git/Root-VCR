@@ -1,20 +1,28 @@
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { getTenantContext, UnauthorizedError, ForbiddenError } from "@/lib/tenant-context"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const session = await auth()
-
-  if (!session?.user) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "Session tidak ditemukan" },
-      { status: 401 }
-    )
+  let ctx
+  try {
+    ctx = await getTenantContext()
+  } catch (e) {
+    if (e instanceof UnauthorizedError) {
+      return NextResponse.json(
+        { error: "Unauthorized", message: e.message },
+        { status: 401 }
+      )
+    }
+    if (e instanceof ForbiddenError) {
+      return NextResponse.json({ error: "Forbidden", message: e.message }, { status: 403 })
+    }
+    throw e
   }
 
-  // Ambil data terbaru dari DB (bukan hanya dari JWT)
+  // Ambil data terbaru dari DB (bukan hanya dari JWT).
+  // Pakai prisma raw karena SUPER_ADMIN punya tenant_id NULL — tidak bisa di-scope.
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: ctx.userId },
     select: {
       id: true,
       email: true,

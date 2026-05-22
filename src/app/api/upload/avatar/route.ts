@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/api-helpers"
+import { getTenantContext, UnauthorizedError, ForbiddenError } from "@/lib/tenant-context"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 
 export async function POST(req: NextRequest) {
-  const { user: sessionUser, error } = await requireAuth()
-  if (error) return error
+  let ctx
+  try {
+    ctx = await getTenantContext()
+  } catch (e) {
+    if (e instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized", message: e.message }, { status: 401 })
+    }
+    if (e instanceof ForbiddenError) {
+      return NextResponse.json({ error: "Forbidden", message: e.message }, { status: 403 })
+    }
+    throw e
+  }
 
   let formData: FormData
   try {
@@ -22,7 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Reseller can only upload their own avatar; tenant admin can upload for any user in their tenant
-  if (sessionUser.role === "RESELLER" && userId !== sessionUser.id) {
+  if (ctx.role === "RESELLER" && userId !== ctx.userId) {
     return NextResponse.json({ error: "Forbidden", message: "Tidak diizinkan" }, { status: 403 })
   }
 

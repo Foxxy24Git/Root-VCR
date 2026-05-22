@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
+import { getTenantScope } from "@/lib/api-helpers"
 import { createMikrotikClient } from "@/lib/mikrotik"
 import { parseSessionTimeout } from "@/services/mikrotik.service"
-import { prisma } from "@/lib/prisma"
 
-export async function GET() {
-  const { user, error } = await requireAdmin()
+export async function GET(req: NextRequest) {
+  const { ctx, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const client = await createMikrotikClient(user.tenantId!)
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const client = await createMikrotikClient(ctx.tenantId)
   try {
     const conn = await client.connect()
     const profiles = await conn.menu("/ip/hotspot/user/profile").getAll()
@@ -37,10 +42,14 @@ export async function GET() {
 
 // DELETE /api/mikrotik/profiles?profileId=xxx — DB only, admin only
 export async function DELETE(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const profileId = req.nextUrl.searchParams.get("profileId")
   if (!profileId) {
@@ -50,14 +59,12 @@ export async function DELETE(req: NextRequest) {
   console.log("DELETE DB ONLY:", profileId)
 
   try {
-    // Verify profile belongs to tenant before delete
-    const existing = await prisma.profile.findFirst({
-      where: { id: profileId, tenant_id: tenantId },
-    })
+    // Verify profile belongs to tenant before delete (auto-injected)
+    const existing = await db.profile.findFirst({ where: { id: profileId } })
     if (!existing) {
       return NextResponse.json({ error: "Not Found" }, { status: 404 })
     }
-    await prisma.profile.delete({ where: { id: profileId } })
+    await db.profile.delete({ where: { id: profileId } })
     return NextResponse.json({ success: true })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Gagal menghapus profile"

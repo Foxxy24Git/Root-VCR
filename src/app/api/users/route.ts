@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, paginate } from "@/lib/api-helpers"
+import { getTenantScope, paginate } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { createUserSchema } from "@/lib/validations/user"
 import bcrypt from "bcryptjs"
@@ -7,10 +7,14 @@ import type { Role } from "@prisma/client"
 
 // GET /api/users — list users in current tenant (tenant admin only)
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const { searchParams } = req.nextUrl
   const page = parseInt(searchParams.get("page") ?? "1")
@@ -21,7 +25,6 @@ export async function GET(req: NextRequest) {
   const { take, skip } = paginate(page, limit)
 
   const where = {
-    tenant_id: tenantId,
     ...(roleParam ? { role: roleParam as Role } : {}),
     ...(search
       ? {
@@ -34,7 +37,7 @@ export async function GET(req: NextRequest) {
   }
 
   const [users, total] = await Promise.all([
-    prisma.user.findMany({
+    db.user.findMany({
       where,
       skip,
       take,
@@ -57,7 +60,7 @@ export async function GET(req: NextRequest) {
         },
       },
     }),
-    prisma.user.count({ where }),
+    db.user.count({ where }),
   ])
 
   return NextResponse.json({
@@ -68,10 +71,14 @@ export async function GET(req: NextRequest) {
 
 // POST /api/users — buat reseller baru (tenant admin only)
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try {
@@ -90,7 +97,7 @@ export async function POST(req: NextRequest) {
 
   const { email, password, name, phone, location, fee_percentage } = parsed.data
 
-  // Cek email sudah ada (email @unique global)
+  // Cek email sudah ada (email @unique GLOBAL — pakai prisma raw, bukan db)
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     return NextResponse.json(
@@ -101,7 +108,7 @@ export async function POST(req: NextRequest) {
 
   const password_hash = await bcrypt.hash(password, 12)
 
-  const newUser = await prisma.$transaction(async (tx) => {
+  const newUser = await db.$transaction(async (tx) => {
     const created = await tx.user.create({
       data: {
         email,
@@ -111,7 +118,6 @@ export async function POST(req: NextRequest) {
         location: location ?? null,
         fee_percentage: fee_percentage ?? 0,
         role: "RESELLER",
-        tenant_id: tenantId,
       },
       select: {
         id: true,
@@ -134,7 +140,7 @@ export async function POST(req: NextRequest) {
         balance: 0,
         total_topup: 0,
         total_spent: 0,
-        tenant_id: tenantId,
+        tenant_id: ctx.tenantId,
       },
     })
 

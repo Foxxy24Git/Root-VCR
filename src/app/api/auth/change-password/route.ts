@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/api-helpers"
+import { getTenantContext, UnauthorizedError, ForbiddenError } from "@/lib/tenant-context"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -10,13 +10,23 @@ const changePasswordSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAuth()
-  if (error) return error
+  let ctx
+  try {
+    ctx = await getTenantContext()
+  } catch (e) {
+    if (e instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized", message: e.message }, { status: 401 })
+    }
+    if (e instanceof ForbiddenError) {
+      return NextResponse.json({ error: "Forbidden", message: e.message }, { status: 403 })
+    }
+    throw e
+  }
 
   try {
     const body = await req.json()
     const parsed = changePasswordSchema.safeParse(body)
-    
+
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation Error", issues: parsed.error.flatten().fieldErrors },
@@ -26,10 +36,8 @@ export async function POST(req: NextRequest) {
 
     const { currentPassword, newPassword } = parsed.data
 
-    // Get current user from DB to check the hash
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id }
-    })
+    // Pakai prisma raw karena user mungkin SUPER_ADMIN (tenant_id NULL)
+    const dbUser = await prisma.user.findUnique({ where: { id: ctx.userId } })
 
     if (!dbUser) {
       return NextResponse.json({ error: "Not Found", message: "User tidak ditemukan" }, { status: 404 })
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
     const newHash = await bcrypt.hash(newPassword, 10)
 
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: ctx.userId },
       data: { password_hash: newHash }
     })
 

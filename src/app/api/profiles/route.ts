@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { createProfileSchema } from "@/lib/validations/profile"
 
 // GET /api/profiles — semua role bisa lihat (scoped tenant)
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth()
+  const { db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
-
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
 
   const { searchParams } = req.nextUrl
   const activeOnly = searchParams.get("active") !== "false"
 
-  const profiles = await prisma.profile.findMany({
+  const profiles = await db.profile.findMany({
     where: {
-      tenant_id: tenantId,
       ...(activeOnly ? { is_active: true } : {}),
     },
     orderBy: { price: "asc" },
@@ -39,10 +36,14 @@ export async function GET(req: NextRequest) {
 
 // POST /api/profiles — admin only
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -57,11 +58,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const profile = await prisma.profile.create({
+  const profile = await db.profile.create({
     data: {
       ...parsed.data,
       price: parsed.data.price,
-      tenant_id: tenantId,
+      tenant_id: ctx.tenantId,
     },
     select: {
       id: true, name: true, duration_days: true, duration_hours: true,

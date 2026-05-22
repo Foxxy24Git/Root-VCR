@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth, paginate, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope, paginate } from "@/lib/api-helpers"
 
 // GET /api/vouchers
 // Tenant Admin: semua voucher di tenant-nya | Reseller: voucher milik sendiri
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
-
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
 
   const { searchParams } = req.nextUrl
   const page    = parseInt(searchParams.get("page")   ?? "1")
@@ -20,16 +18,15 @@ export async function GET(req: NextRequest) {
   const { take, skip } = paginate(page, limit)
 
   const where = {
-    tenant_id: tenantId,
     // Reseller hanya lihat voucher mereka sendiri
-    ...(user.role === "RESELLER" ? { user_id: user.id } : {}),
+    ...(ctx.role === "RESELLER" ? { user_id: ctx.userId } : {}),
     ...(status ? { status: status as "unused" | "active" | "expired" | "deleted" } : {}),
     ...(profileId ? { profile_id: profileId } : {}),
     ...(search ? { code: { contains: search, mode: "insensitive" as const } } : {}),
   }
 
   const [vouchers, total] = await Promise.all([
-    prisma.voucher.findMany({
+    db.voucher.findMany({
       where,
       skip,
       take,
@@ -49,7 +46,7 @@ export async function GET(req: NextRequest) {
         profile: { select: { id: true, name: true, duration_days: true } },
       },
     }),
-    prisma.voucher.count({ where }),
+    db.voucher.count({ where }),
   ])
 
   return NextResponse.json({

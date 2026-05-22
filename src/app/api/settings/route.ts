@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 
 // GET /api/settings -> retrieves all settings as a key-value pair object (scoped to tenant)
-export async function GET() {
-  const { user, error } = await requireAdmin()
+export async function GET(req: NextRequest) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
-  const rows = await prisma.setting.findMany({ where: { tenant_id: tenantId } })
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const rows = await db.setting.findMany()
   const settings: Record<string, string | null> = {}
 
   rows.forEach(r => {
@@ -20,10 +24,14 @@ export async function GET() {
 
 // POST /api/settings -> Updates settings via an array of {key, value} objects
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: { updates: { key: string, value: string }[] }
   try {
@@ -37,12 +45,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await prisma.$transaction(
+    await db.$transaction(
       body.updates.map((update) =>
-        prisma.setting.upsert({
-          where: { tenant_id_key: { tenant_id: tenantId, key: update.key } },
+        db.setting.upsert({
+          where: { tenant_id_key: { tenant_id: ctx.tenantId, key: update.key } },
           update: { value: update.value, type: "string" },
-          create: { tenant_id: tenantId, key: update.key, value: update.value, type: "string" },
+          create: { key: update.key, value: update.value, type: "string", tenant_id: ctx.tenantId },
         })
       )
     )

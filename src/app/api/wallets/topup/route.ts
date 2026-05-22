@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { z } from "zod"
 
 const topupSchema = z.object({
@@ -11,10 +10,14 @@ const topupSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const { user: admin, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = admin.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -32,9 +35,7 @@ export async function POST(req: NextRequest) {
   const { userId, amount, type, description } = parsed.data
 
   try {
-    const targetUser = await prisma.user.findFirst({
-      where: { id: userId, tenant_id: tenantId },
-    })
+    const targetUser = await db.user.findFirst({ where: { id: userId } })
     if (!targetUser) {
       return NextResponse.json({ error: "Not Found", message: "User tidak ditemukan" }, { status: 404 })
     }
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden", message: "Akun reseller dibekukan, tidak bisa melakukan topup" }, { status: 403 })
     }
 
-    const wallet = await prisma.$transaction(async (tx) => {
+    const wallet = await db.$transaction(async (tx) => {
       let targetWallet = await tx.wallet.findUnique({ where: { user_id: userId } })
 
       if (!targetWallet) {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
             balance: 0,
             total_topup: 0,
             total_spent: 0,
-            tenant_id: tenantId,
+            tenant_id: ctx.tenantId,
           }
         })
       }
@@ -86,13 +87,13 @@ export async function POST(req: NextRequest) {
       await tx.walletLog.create({
         data: {
           wallet_id: targetWallet.id,
-          admin_id: admin.id,
+          admin_id: ctx.userId,
           type: type,
           amount: amount,
           balance_before: balanceBefore,
           balance_after: balanceAfter,
           description: description || (type === "topup" ? "Manual Top Up by Admin" : "Manual Adjustment by Admin"),
-          tenant_id: tenantId,
+          tenant_id: ctx.tenantId,
         }
       })
 

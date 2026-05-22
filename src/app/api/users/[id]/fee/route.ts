@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { z } from "zod"
 
 const feeSchema = z.object({
@@ -9,8 +8,14 @@ const feeSchema = z.object({
 
 // PATCH /api/users/[id]/fee — set fee percentage
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const { user: sessionUser, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
+
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -22,12 +27,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Validation Error", issues: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const user = await prisma.user.findFirst({
-    where: { id: params.id, tenant_id: sessionUser.tenantId! },
-  })
+  const user = await db.user.findFirst({ where: { id: params.id } })
   if (!user) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
-  const updated = await prisma.user.update({
+  const updated = await db.user.update({
     where: { id: params.id },
     data: { fee_percentage: parsed.data.fee_percentage },
     select: { id: true, email: true, fee_percentage: true },

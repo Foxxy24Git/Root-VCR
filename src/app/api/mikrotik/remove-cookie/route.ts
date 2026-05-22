@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
+import { getTenantScope } from "@/lib/api-helpers"
 import { deleteHotspotCookie } from "@/services/mikrotik.service"
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
+
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let code: string
   try {
@@ -19,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await deleteHotspotCookie(user.tenantId!, code)
+    const result = await deleteHotspotCookie(ctx.tenantId, code)
     console.log(`[API] /mikrotik/remove-cookie code="${code}" result=`, result)
     return NextResponse.json({
       success: result.success,

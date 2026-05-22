@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { deleteHotspotCookie } from "@/services/mikrotik.service"
 
 type Params = { params: { id: string } }
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAdmin()
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
-  const voucher = await prisma.voucher.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const voucher = await db.voucher.findFirst({ where: { id: params.id } })
   if (!voucher) {
     return NextResponse.json({ error: "Voucher tidak ditemukan" }, { status: 404 })
   }
 
   try {
-    const result = await deleteHotspotCookie(tenantId, voucher.code)
+    const result = await deleteHotspotCookie(ctx.tenantId, voucher.code)
     console.log(`[API] delete cookie voucher code="${voucher.code}" result=`, result)
     return NextResponse.json({
       success: result.success,

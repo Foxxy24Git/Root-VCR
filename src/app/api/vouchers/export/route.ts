@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 
 // Helper: convert Node.js Buffer to a BodyInit-compatible ArrayBuffer
 function toArrayBuffer(buf: Buffer): ArrayBuffer {
@@ -8,20 +7,18 @@ function toArrayBuffer(buf: Buffer): ArrayBuffer {
 }
 
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireAuth()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
-
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
 
   const format = req.nextUrl.searchParams.get("format")
 
   const where = {
-    tenant_id: tenantId,
-    ...(user.role === "RESELLER" ? { user_id: user.id } : {}),
+    ...(ctx.role === "RESELLER" ? { user_id: ctx.userId } : {}),
   }
 
-  const vouchers = await prisma.voucher.findMany({
+  const vouchers = await db.voucher.findMany({
     where,
     orderBy: { generated_at: "desc" },
     include: { profile: { select: { name: true } } },

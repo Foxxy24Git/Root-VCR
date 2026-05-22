@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { deleteUser } from "@/services/mikrotik.service"
 
 type Params = { params: { id: string } }
 
 // GET /api/vouchers/[id]
-export async function GET(_req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAuth()
+export async function GET(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
-
-  const voucher = await prisma.voucher.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
+  const voucher = await db.voucher.findFirst({
+    where: { id: params.id },
     include: {
       user: { select: { id: true, name: true, email: true } },
       profile: true,
@@ -24,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (!voucher) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   // Reseller hanya bisa lihat voucher miliknya
-  if (user.role === "RESELLER" && voucher.user_id !== user.id) {
+  if (ctx.role === "RESELLER" && voucher.user_id !== ctx.userId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -33,15 +31,17 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // DELETE /api/vouchers/[id] — admin only
 // Flow: delete from MikroTik FIRST, then hard-delete from DB
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAdmin()
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
-  const voucher = await prisma.voucher.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const voucher = await db.voucher.findFirst({ where: { id: params.id } })
   if (!voucher) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   if (voucher.status === "active") {
@@ -53,14 +53,14 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   // 1. Delete from MikroTik first (source of truth)
   try {
-    await deleteUser(tenantId, voucher.code)
+    await deleteUser(ctx.tenantId, voucher.code)
     console.log("[DELETE voucher] Removed from MikroTik:", voucher.code)
   } catch (e) {
     console.error("[DELETE voucher] MikroTik error (continuing):", e)
   }
 
-  // 2. Hard-delete from DB
-  await prisma.voucher.delete({ where: { id: params.id } })
+  // 2. Hard-delete from DB (tenant_id auto-injected by extension)
+  await db.voucher.delete({ where: { id: params.id } })
 
   return NextResponse.json({ message: "Voucher dihapus" })
 }

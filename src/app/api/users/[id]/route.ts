@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { updateUserSchema } from "@/lib/validations/user"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -8,20 +7,19 @@ import { z } from "zod"
 type Params = { params: { id: string } }
 
 // GET /api/users/[id]
-export async function GET(_req: NextRequest, { params }: Params) {
-  const { user: sessionUser, error } = await requireAuth()
+export async function GET(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const { tenantId, error: tenantErr } = resolveTenantId(sessionUser)
-  if (tenantErr) return tenantErr
-
   // Reseller hanya bisa lihat dirinya sendiri
-  if (sessionUser.role === "RESELLER" && sessionUser.id !== params.id) {
+  if (ctx.role === "RESELLER" && ctx.userId !== params.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const user = await prisma.user.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
+  const user = await db.user.findFirst({
+    where: { id: params.id },
     select: {
       id: true,
       email: true,
@@ -54,10 +52,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // PATCH /api/users/[id] — admin only
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { user: sessionUser, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = sessionUser.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -84,9 +86,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     )
   }
 
-  const existing = await prisma.user.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const existing = await db.user.findFirst({ where: { id: params.id } })
   if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   const { password, ...rest } = parsed.data
@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data.password_hash = await bcrypt.hash(password, 12)
   }
 
-  const user = await prisma.user.update({
+  const user = await db.user.update({
     where: { id: params.id },
     data,
     select: {
@@ -111,14 +111,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 // PUT /api/users/[id]
 export async function PUT(req: NextRequest, { params }: Params) {
-  const { user: sessionUser, error } = await requireAuth()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const { tenantId, error: tenantErr } = resolveTenantId(sessionUser)
-  if (tenantErr) return tenantErr
-
   // Reseller hanya bisa update dirinya sendiri, tenant admin bisa update semua
-  if (sessionUser.role === "RESELLER" && sessionUser.id !== params.id) {
+  if (ctx.role === "RESELLER" && ctx.userId !== params.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -131,7 +130,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const avatarExt = z.object({ avatar_url: z.string().nullable().optional() })
   const schema =
-    sessionUser.role === "TENANT_ADMIN" || sessionUser.role === "SUPER_ADMIN"
+    ctx.role === "TENANT_ADMIN" || ctx.role === "SUPER_ADMIN"
       ? updateUserSchema.merge(avatarExt).extend({ fee_percentage: z.number().min(0).max(100).optional() })
       : updateUserSchema.merge(avatarExt).omit({ fee_percentage: true })
 
@@ -143,9 +142,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     )
   }
 
-  const existing = await prisma.user.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const existing = await db.user.findFirst({ where: { id: params.id } })
   if (!existing) {
     return NextResponse.json({ error: "Not Found" }, { status: 404 })
   }
@@ -157,7 +154,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     delete data.password
   }
 
-  const user = await prisma.user.update({
+  const user = await db.user.update({
     where: { id: params.id },
     data,
     select: {
@@ -171,27 +168,29 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/users/[id] — admin only
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { user: sessionUser, error } = await requireAdmin()
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = sessionUser.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
-  if (sessionUser.id === params.id) {
+  if (ctx.userId === params.id) {
     return NextResponse.json(
       { error: "Forbidden", message: "Tidak bisa menghapus akun sendiri" },
       { status: 403 }
     )
   }
 
-  const existing = await prisma.user.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const existing = await db.user.findFirst({ where: { id: params.id } })
   if (!existing) {
     return NextResponse.json({ error: "Not Found" }, { status: 404 })
   }
 
-  await prisma.$transaction(async (tx) => {
+  await db.$transaction(async (tx) => {
     const wallet = await tx.wallet.findUnique({ where: { user_id: params.id } })
     if (wallet) {
       await tx.walletLog.deleteMany({ where: { wallet_id: wallet.id } })

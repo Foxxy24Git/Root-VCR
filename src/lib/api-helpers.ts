@@ -1,6 +1,13 @@
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import type { Role } from "@prisma/client"
+import {
+  getTenantContext as _getTenantContext,
+  ForbiddenError,
+  UnauthorizedError,
+  type TenantContext,
+} from "@/lib/tenant-context"
+import { getTenantPrisma, type TenantPrismaClient } from "@/lib/prisma-tenant"
 
 export interface SessionUser {
   id: string
@@ -140,3 +147,83 @@ export function resolveTenantId(
   }
   return { tenantId: user.tenantId, error: null }
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Tenant scope helper — combine getTenantContext + getTenantPrisma
+// ─────────────────────────────────────────────────────────────────────
+
+export interface ScopedTenant {
+  ctx: TenantContext & { tenantId: string }
+  db: TenantPrismaClient
+}
+
+type TenantScopeResult =
+  | { ctx: ScopedTenant["ctx"]; db: ScopedTenant["db"]; error: null }
+  | { ctx: null; db: null; error: NextResponse }
+
+/**
+ * Resolve session ke tenant-scoped context + Prisma client dalam satu pemanggilan.
+ *
+ * - SUPER_ADMIN wajib pilih tenant via param `overrideTenantId` (biasanya dari
+ *   `?tenantId=` query param di route).
+ * - TENANT_ADMIN / RESELLER: pakai `tenantId` dari session.
+ * - `db` adalah `getTenantPrisma(tenantId)` yang auto-inject `tenant_id` ke
+ *   semua query untuk model yang ber-tenant.
+ *
+ * Pemakaian di route:
+ * ```ts
+ *   const { ctx, db, error } = await getTenantScope(req.nextUrl.searchParams.get("tenantId"))
+ *   if (error) return error
+ *   const vouchers = await db.voucher.findMany()  // auto-scoped tenant_id
+ * ```
+ */
+export async function getTenantScope(
+  overrideTenantId?: string | null
+): Promise<TenantScopeResult> {
+  let ctx: TenantContext
+  try {
+    ctx = await _getTenantContext()
+  } catch (e) {
+    if (e instanceof UnauthorizedError) {
+      return {
+        ctx: null,
+        db: null,
+        error: NextResponse.json(
+          { error: "Unauthorized", message: e.message },
+          { status: 401 }
+        ),
+      }
+    }
+    if (e instanceof ForbiddenError) {
+      return { ctx: null, db: null, error: forbid(e.message) }
+    }
+    throw e
+  }
+
+  let tenantId: string | null
+  if (ctx.role === "SUPER_ADMIN") {
+    tenantId = overrideTenantId ?? ctx.tenantId
+    if (!tenantId) {
+      return {
+        ctx: null,
+        db: null,
+        error: forbid("Super Admin harus pilih tenant (?tenantId=...)"),
+      }
+    }
+  } else {
+    if (!ctx.tenantId) {
+      return { ctx: null, db: null, error: forbid("Tenant context wajib") }
+    }
+    tenantId = ctx.tenantId
+  }
+
+  return {
+    ctx: { ...ctx, tenantId },
+    db: getTenantPrisma(tenantId),
+    error: null,
+  }
+}
+
+// Re-export for convenience (PRD says: import getTenantContext from @/lib/tenant-context)
+export { _getTenantContext as getTenantContext }
+export type { TenantContext } from "@/lib/tenant-context"

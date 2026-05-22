@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth, resolveTenantId } from "@/lib/api-helpers"
+import { getTenantScope } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateVoucherSchema } from "@/lib/validations/voucher"
 import { generateVoucherCode, calculateResellerPrice, generateRandomPassword } from "@/lib/utils"
@@ -9,11 +9,10 @@ import { createHotspotUser } from "@/services/mikrotik.service"
 // Tenant Admin: gratis (tidak potong wallet)
 // Reseller: potong wallet sesuai harga reseller
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireAuth()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
-
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -30,9 +29,9 @@ export async function POST(req: NextRequest) {
 
   const { profileId, quantity } = parsed.data
 
-  // Ambil profile (scoped ke tenant)
-  const profile = await prisma.profile.findFirst({
-    where: { id: profileId, tenant_id: tenantId, is_active: true },
+  // Ambil profile (tenant_id auto-injected)
+  const profile = await db.profile.findFirst({
+    where: { id: profileId, is_active: true },
   })
   if (!profile) {
     return NextResponse.json({ error: "Not Found", message: "Profile tidak ditemukan" }, { status: 404 })
@@ -41,9 +40,9 @@ export async function POST(req: NextRequest) {
   const basePrice = Number(profile.price)
 
   // Reseller: cek akses ke profile + saldo wallet
-  if (user.role === "RESELLER") {
-    const access = await prisma.resellerProfile.findUnique({
-      where: { user_id_profile_id: { user_id: user.id, profile_id: profileId } },
+  if (ctx.role === "RESELLER") {
+    const access = await db.resellerProfile.findUnique({
+      where: { user_id_profile_id: { user_id: ctx.userId, profile_id: profileId } },
     })
     if (!access || !access.is_enabled) {
       return NextResponse.json(
@@ -53,8 +52,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Cek akun reseller tidak dibekukan
-    const resellerData = await prisma.user.findUnique({
-      where: { id: user.id },
+    const resellerData = await db.user.findUnique({
+      where: { id: ctx.userId },
       select: { is_frozen: true, fee_percentage: true },
     })
     if (resellerData?.is_frozen) {
@@ -68,7 +67,7 @@ export async function POST(req: NextRequest) {
     const { resellerPrice } = calculateResellerPrice(basePrice, feePercentage)
     const totalCost = resellerPrice * quantity
 
-    const wallet = await prisma.wallet.findUnique({ where: { user_id: user.id } })
+    const wallet = await db.wallet.findUnique({ where: { user_id: ctx.userId } })
     if (!wallet || Number(wallet.balance) < totalCost) {
       return NextResponse.json(
         {
@@ -80,10 +79,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Ambil settings untuk kode format (tenant-scoped)
-  const settings = await prisma.setting.findMany({
+  // Ambil settings untuk kode format (tenant-scoped auto-inject)
+  const settings = await db.setting.findMany({
     where: {
-      tenant_id: tenantId,
       key: {
         in: [
           "voucher_prefix",
@@ -106,7 +104,7 @@ export async function POST(req: NextRequest) {
   const passwordPrefix = getSetting("voucher_password_prefix", "")
 
   // Generate kode unik (retry jika collision)
-  // NOTE: code @unique global, jadi check existing TIDAK di-scope tenant.
+  // NOTE: code @unique GLOBAL — pakai `prisma` (bukan `db`) untuk check cross-tenant
   const codes: string[] = []
   const existingCodes = new Set(
     (await prisma.voucher.findMany({ select: { code: true } })).map((v) => v.code)
@@ -133,11 +131,11 @@ export async function POST(req: NextRequest) {
 
   // Hitung harga per voucher
   // Tenant Admin: gratis (price_charged = 0, tidak potong wallet)
-  let priceCharged = user.role === "TENANT_ADMIN" ? 0 : basePrice
+  let priceCharged = ctx.role === "TENANT_ADMIN" ? 0 : basePrice
   let feePercentage = 0
-  if (user.role === "RESELLER") {
-    const resellerData = await prisma.user.findUnique({
-      where: { id: user.id },
+  if (ctx.role === "RESELLER") {
+    const resellerData = await db.user.findUnique({
+      where: { id: ctx.userId },
       select: { fee_percentage: true },
     })
     feePercentage = Number(resellerData?.fee_percentage ?? 0)
@@ -146,8 +144,8 @@ export async function POST(req: NextRequest) {
 
   const totalCost = priceCharged * quantity
 
-  // Jalankan dalam satu transaksi DB
-  const vouchers = await prisma.$transaction(async (tx) => {
+  // Jalankan dalam satu transaksi DB (extension propagates ke `tx`)
+  const vouchers = await db.$transaction(async (tx) => {
     const created = await Promise.all(
       codes.map((code, i) => {
         console.log("INSERT DB:", code)
@@ -155,12 +153,12 @@ export async function POST(req: NextRequest) {
           data: {
             code,
             password: passwords[i],
-            user_id: user.id,
+            user_id: ctx.userId,
             profile_id: profileId,
             status: "unused",
             price_charged: priceCharged,
-            source: user.role === "TENANT_ADMIN" ? "admin" : "reseller",
-            tenant_id: tenantId,
+            source: ctx.role === "TENANT_ADMIN" ? "admin" : "reseller",
+            tenant_id: ctx.tenantId,
           },
           select: {
             id: true, code: true, status: true, price_charged: true,
@@ -172,15 +170,15 @@ export async function POST(req: NextRequest) {
     )
 
     // Potong wallet reseller
-    if (user.role === "RESELLER" && totalCost > 0) {
-      const wallet = await tx.wallet.findUnique({ where: { user_id: user.id } })
+    if (ctx.role === "RESELLER" && totalCost > 0) {
+      const wallet = await tx.wallet.findUnique({ where: { user_id: ctx.userId } })
       if (!wallet) throw new Error("Wallet tidak ditemukan")
 
       const balanceBefore = Number(wallet.balance)
       const balanceAfter  = balanceBefore - totalCost
 
       await tx.wallet.update({
-        where: { user_id: user.id },
+        where: { user_id: ctx.userId },
         data: {
           balance:     balanceAfter,
           total_spent: { increment: totalCost },
@@ -196,7 +194,7 @@ export async function POST(req: NextRequest) {
           balance_after:  balanceAfter,
           description:    `Generate ${quantity}x ${profile.name}`,
           reference_id:   created[0].id,
-          tenant_id:      tenantId,
+          tenant_id:      ctx.tenantId,
         },
       })
     }
@@ -211,7 +209,7 @@ export async function POST(req: NextRequest) {
   // Sync ke MikroTik (best-effort)
   const syncResults = await Promise.allSettled(
     vouchers.map((v, i) =>
-      createHotspotUser(tenantId, v.code, passwords[i], profile.mikrotik_profile)
+      createHotspotUser(ctx.tenantId, v.code, passwords[i], profile.mikrotik_profile)
     )
   )
 
@@ -225,8 +223,8 @@ export async function POST(req: NextRequest) {
   })
 
   if (syncedIds.length > 0) {
-    await prisma.voucher.updateMany({
-      where: { id: { in: syncedIds }, tenant_id: tenantId },
+    await db.voucher.updateMany({
+      where: { id: { in: syncedIds } },
       data: { mikrotik_synced: true },
     })
     syncedIds.forEach((id) => {
@@ -249,7 +247,7 @@ export async function POST(req: NextRequest) {
         quantity,
         profile_name: profile.name,
         price_per_voucher: priceCharged,
-        total_cost: user.role === "RESELLER" ? totalCost : 0,
+        total_cost: ctx.role === "RESELLER" ? totalCost : 0,
         fee_percentage: feePercentage,
         mikrotik_synced: syncedIds.length,
         mikrotik_failed: syncFailed,

@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 
 const KEYS = ["whatsapp_number", "whatsapp_topup_message", "whatsapp_withdraw_message"] as const
 type ContactKey = (typeof KEYS)[number]
 
 const PHONE_RE = /^(08|628)\d{8,12}$/
 
-export async function GET() {
-  const { user, error } = await requireAuth()
+export async function GET(req: NextRequest) {
+  // Reseller juga butuh akses (untuk render WhatsApp button) — scope ke tenantId mereka
+  const { db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  // Reseller juga butuh akses (untuk render WhatsApp button) — scope ke tenantId mereka
-  if (!user.tenantId) {
-    return NextResponse.json({ error: "Forbidden", message: "Tenant context wajib" }, { status: 403 })
-  }
-
-  const rows = await prisma.setting.findMany({
-    where: { tenant_id: user.tenantId, key: { in: [...KEYS] } },
-  })
+  const rows = await db.setting.findMany({ where: { key: { in: [...KEYS] } } })
   const result: Record<ContactKey, string | null> = {
     whatsapp_number: null,
     whatsapp_topup_message: null,
@@ -29,10 +24,14 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: Partial<Record<ContactKey, string>>
   try {
@@ -71,12 +70,12 @@ export async function PUT(req: NextRequest) {
   ]
 
   try {
-    await prisma.$transaction(
+    await db.$transaction(
       updates.map(u =>
-        prisma.setting.upsert({
-          where: { tenant_id_key: { tenant_id: tenantId, key: u.key } },
+        db.setting.upsert({
+          where: { tenant_id_key: { tenant_id: ctx.tenantId, key: u.key } },
           update: { value: u.value, type: "string" },
-          create: { tenant_id: tenantId, key: u.key, value: u.value, type: "string" },
+          create: { key: u.key, value: u.value, type: "string", tenant_id: ctx.tenantId },
         })
       )
     )

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { z } from "zod"
 
 const assignSchema = z.object({
@@ -10,10 +9,14 @@ const assignSchema = z.object({
 
 // POST /api/profiles/assign — admin only
 export async function POST(req: NextRequest) {
-  const { user: sessionUser, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = sessionUser.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try {
@@ -32,9 +35,9 @@ export async function POST(req: NextRequest) {
 
   const { userId, profileIds } = parsed.data
 
-  // Verify reseller belongs to this tenant
-  const user = await prisma.user.findFirst({
-    where: { id: userId, tenant_id: tenantId },
+  // Verify reseller belongs to this tenant (tenant_id auto-injected)
+  const user = await db.user.findFirst({
+    where: { id: userId },
     select: { role: true },
   })
   if (!user || user.role !== "RESELLER") {
@@ -43,8 +46,8 @@ export async function POST(req: NextRequest) {
 
   // Verify all profileIds belong to this tenant
   if (profileIds.length > 0) {
-    const validProfiles = await prisma.profile.findMany({
-      where: { id: { in: profileIds }, tenant_id: tenantId },
+    const validProfiles = await db.profile.findMany({
+      where: { id: { in: profileIds } },
       select: { id: true },
     })
     if (validProfiles.length !== profileIds.length) {
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  await prisma.$transaction(async (tx) => {
+  await db.$transaction(async (tx) => {
     await tx.resellerProfile.deleteMany({ where: { user_id: userId } })
 
     if (profileIds.length > 0) {
@@ -64,7 +67,7 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           profile_id,
           is_enabled: true,
-          tenant_id: tenantId,
+          tenant_id: ctx.tenantId,
         })),
       })
     }
@@ -75,18 +78,22 @@ export async function POST(req: NextRequest) {
 
 // GET /api/profiles/assign?userId=xxx — get current assignments for a reseller
 export async function GET(req: NextRequest) {
-  const { user: sessionUser, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = sessionUser.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const userId = req.nextUrl.searchParams.get("userId")
   if (!userId) {
     return NextResponse.json({ error: "Bad Request", message: "userId diperlukan" }, { status: 400 })
   }
 
-  const assignments = await prisma.resellerProfile.findMany({
-    where: { user_id: userId, tenant_id: tenantId },
+  const assignments = await db.resellerProfile.findMany({
+    where: { user_id: userId },
     select: { profile_id: true, is_enabled: true },
   })
 

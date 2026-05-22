@@ -1,34 +1,31 @@
-import { NextResponse } from "next/server"
-import { requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from "next/server"
+import { getTenantScope } from "@/lib/api-helpers"
 import { computeVoucherStatuses, HotspotUser } from "@/services/mikrotik.service"
 import { withMikrotik } from "@/lib/mikrotik"
 
 // POST /api/mikrotik/sync-vouchers
 // Tenant Admin: sync all non-deleted vouchers in their tenant + delete from DB if gone from MikroTik
 // Reseller: sync only their own vouchers
-export async function POST() {
-  const { user, error } = await requireAuth()
+export async function POST(req: NextRequest) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
-
   const where = {
-    tenant_id: tenantId,
     status: { not: "deleted" as const },
-    ...(user.role === "RESELLER" ? { user_id: user.id } : {}),
+    ...(ctx.role === "RESELLER" ? { user_id: ctx.userId } : {}),
   }
 
-  let vouchers = await prisma.voucher.findMany({
+  let vouchers = await db.voucher.findMany({
     where,
     select: { id: true, code: true, used_at: true, status: true, client_ip: true, client_mac: true },
   })
 
   // ── Bidirectional delete sync (tenant admin only) ──────────────────────
-  if (user.role === "TENANT_ADMIN" && vouchers.length > 0) {
+  if (ctx.role === "TENANT_ADMIN" && vouchers.length > 0) {
     try {
-      const mtUsers = await withMikrotik(tenantId, (api) =>
+      const mtUsers = await withMikrotik(ctx.tenantId, (api) =>
         api.menu("/ip/hotspot/user").getAll() as Promise<HotspotUser[]>
       )
 
@@ -45,8 +42,8 @@ export async function POST() {
         const toDelete = vouchers.filter((v) => !mtSet.has(String(v.code)))
         if (toDelete.length > 0) {
           console.log("[sync-vouchers] Deleting from DB (not in MT):", toDelete.map((v) => v.code))
-          await prisma.voucher.deleteMany({
-            where: { id: { in: toDelete.map((v) => v.id) }, tenant_id: tenantId },
+          await db.voucher.deleteMany({
+            where: { id: { in: toDelete.map((v) => v.id) } },
           })
           const deletedIds = new Set(toDelete.map((v) => v.id))
           vouchers = vouchers.filter((v) => !deletedIds.has(v.id))
@@ -63,7 +60,7 @@ export async function POST() {
 
   let syncResults
   try {
-    syncResults = await computeVoucherStatuses(tenantId, vouchers.map((v) => ({ code: v.code })))
+    syncResults = await computeVoucherStatuses(ctx.tenantId, vouchers.map((v) => ({ code: v.code })))
   } catch (e) {
     console.error("[sync-vouchers] MikroTik error:", e)
     return NextResponse.json({ error: "Gagal terhubung ke MikroTik" }, { status: 503 })
@@ -79,10 +76,10 @@ export async function POST() {
   })
 
   if (toUpdate.length > 0) {
-    await prisma.$transaction(
+    await db.$transaction(
       toUpdate.map((v) => {
         const r = resultMap.get(v.code)!
-        return prisma.voucher.update({
+        return db.voucher.update({
           where: { id: v.id },
           data: {
             status: r.status,

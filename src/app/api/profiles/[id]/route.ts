@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, requireAuth, resolveTenantId } from "@/lib/api-helpers"
-import { prisma } from "@/lib/prisma"
+import { getTenantScope } from "@/lib/api-helpers"
 import { updateProfileSchema } from "@/lib/validations/profile"
 
 type Params = { params: { id: string } }
 
 // GET /api/profiles/[id]
-export async function GET(_req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAuth()
+export async function GET(req: NextRequest, { params }: Params) {
+  const { db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const { tenantId, error: tenantErr } = resolveTenantId(user)
-  if (tenantErr) return tenantErr
-
-  const profile = await prisma.profile.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const profile = await db.profile.findFirst({ where: { id: params.id } })
   if (!profile) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
   return NextResponse.json({ profile })
@@ -23,10 +19,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // PUT /api/profiles/[id] — admin only
 export async function PUT(req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAdmin()
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   let body: unknown
   try { body = await req.json() } catch {
@@ -41,12 +41,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
     )
   }
 
-  const existing = await prisma.profile.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const existing = await db.profile.findFirst({ where: { id: params.id } })
   if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
-  const profile = await prisma.profile.update({
+  const profile = await db.profile.update({
     where: { id: params.id },
     data: parsed.data,
     select: {
@@ -59,17 +57,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/profiles/[id] — admin only
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { user, error } = await requireAdmin()
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const { ctx, db, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
-  const tenantId = user.tenantId!
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
-  const existing = await prisma.profile.findFirst({
-    where: { id: params.id, tenant_id: tenantId },
-  })
+  const existing = await db.profile.findFirst({ where: { id: params.id } })
   if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
 
-  await prisma.profile.delete({ where: { id: params.id } })
+  await db.profile.delete({ where: { id: params.id } })
   return NextResponse.json({ message: "Profile berhasil dihapus" })
 }

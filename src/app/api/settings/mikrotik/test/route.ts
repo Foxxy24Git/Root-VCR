@@ -1,14 +1,20 @@
-import { NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/api-helpers"
+import { NextRequest, NextResponse } from "next/server"
+import { getTenantScope } from "@/lib/api-helpers"
 import { testMikrotikConnection } from "@/lib/mikrotik"
 
 // POST /api/settings/mikrotik/test
-export async function POST() {
-  const { user, error } = await requireAdmin()
+export async function POST(req: NextRequest) {
+  const { ctx, error } = await getTenantScope(
+    req.nextUrl.searchParams.get("tenantId")
+  )
   if (error) return error
 
+  if (ctx.role !== "TENANT_ADMIN" && ctx.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   try {
-    const result = await testMikrotikConnection(user.tenantId!)
+    const result = await testMikrotikConnection(ctx.tenantId)
     return NextResponse.json(
       { ok: result.ok, message: result.ok ? `Terhubung! Latensi: ${result.latencyMs}ms` : result.error },
       { status: result.ok ? 200 : 503 }
