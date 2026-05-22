@@ -4,18 +4,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
+import { getNav, type AppRole } from './nav-config'
 
 interface SidebarProps {
-  role: 'admin' | 'reseller'
+  role: AppRole
   logoUrl?: string
   companyName?: string
 }
 
 export function Sidebar({ role, logoUrl, companyName }: SidebarProps) {
   const pathname = usePathname()
-  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
-  const displayName = companyName || 'Root.VCR'
+  const navItems = getNav(role)
+  const defaultName = role === 'super-admin' ? 'Root.VCR · Super Admin' : 'Root.VCR'
+  const displayName = companyName || defaultName
 
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-[240px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-20 transition-colors duration-200">
@@ -36,7 +37,11 @@ export function Sidebar({ role, logoUrl, companyName }: SidebarProps) {
       {/* Nav Items */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          // Super Admin dashboard sits at root "/super-admin" — only match exact, otherwise it stays "active" on every sub-route.
+          const isActive =
+            item.href === '/super-admin'
+              ? pathname === '/super-admin'
+              : pathname === item.href || pathname.startsWith(item.href + '/')
           const Icon = item.icon
           return (
             <Link

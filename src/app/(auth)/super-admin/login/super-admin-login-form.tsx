@@ -33,7 +33,7 @@ export function SuperAdminLoginForm() {
         return
       }
 
-      router.push(callbackUrl ?? "/super-admin/dashboard")
+      router.push(callbackUrl ?? "/super-admin")
       router.refresh()
     } catch {
       setError("Terjadi kesalahan. Silakan coba lagi.")

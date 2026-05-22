@@ -16,7 +16,7 @@ export default async function SuperAdminLoginPage() {
   // - Other roles → main login (mereka tidak boleh ke area super admin)
   if (session?.user) {
     if (session.user.role === "SUPER_ADMIN") {
-      redirect("/super-admin/dashboard")
+      redirect("/super-admin")
     }
     redirect("/login")
   }

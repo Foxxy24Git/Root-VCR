@@ -10,7 +10,7 @@ export default async function RootPage() {
 
   const dest =
     session.user.role === "SUPER_ADMIN"
-      ? "/super-admin/dashboard"
+      ? "/super-admin"
       : session.user.role === "TENANT_ADMIN"
       ? "/admin/dashboard"
       : "/reseller/dashboard"

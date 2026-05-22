@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Resolve plan: pakai planId yang dikirim, atau default ke Trial plan
-  let plan = data.plan_id
+  const plan = data.plan_id
     ? await prisma.plan.findUnique({ where: { id: data.plan_id } })
     : await prisma.plan.findFirst({ where: { is_trial: true, is_active: true } })
 

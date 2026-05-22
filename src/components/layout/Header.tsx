@@ -12,20 +12,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
-import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
+import { getNav, type AppRole } from './nav-config'
 
 interface HeaderProps {
-  role: 'admin' | 'reseller'
+  role: AppRole
 }
 
 export function Header({ role }: HeaderProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
+  const navItems = getNav(role)
 
-  // Derive page title from current route
-  const currentNav = navItems.find((item) => pathname === item.href || pathname.startsWith(item.href + '/'))
+  // Derive page title from current route. Super Admin dashboard "/super-admin" needs exact match.
+  const currentNav = navItems.find((item) =>
+    item.href === '/super-admin'
+      ? pathname === '/super-admin'
+      : pathname === item.href || pathname.startsWith(item.href + '/'),
+  )
   const title = currentNav?.label ?? 'Root.VCR'
+
+  const logoutTarget = role === 'super-admin' ? '/super-admin/login' : '/login'
 
   const user = session?.user
   const initials = user?.name
@@ -59,7 +65,7 @@ export function Header({ role }: HeaderProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => signOut({ callbackUrl: logoutTarget })}
               className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
             >
               <LogOut className="mr-2 h-4 w-4" />

@@ -1,10 +1,11 @@
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { BottomNav } from './BottomNav'
+import type { AppRole } from './nav-config'
 
 interface AppShellProps {
   children: React.ReactNode
-  role: 'admin' | 'reseller'
+  role: AppRole
   logoUrl?: string
   companyName?: string
 }

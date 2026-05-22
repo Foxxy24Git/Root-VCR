@@ -3,20 +3,25 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { ADMIN_NAV, RESELLER_NAV } from './nav-config'
+import { getNav, type AppRole } from './nav-config'
 
 interface BottomNavProps {
-  role: 'admin' | 'reseller'
+  role: AppRole
 }
 
 export function BottomNav({ role }: BottomNavProps) {
   const pathname = usePathname()
-  const navItems = role === 'admin' ? ADMIN_NAV : RESELLER_NAV
+  const allNav = getNav(role)
+  // On mobile (bottom nav) we cap to 5 items max so they fit comfortably; super-admin nav has 6, drop "Settings".
+  const navItems = allNav.length > 5 ? allNav.slice(0, 5) : allNav
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-20 flex safe-bottom transition-colors duration-200">
       {navItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+        const isActive =
+          item.href === '/super-admin'
+            ? pathname === '/super-admin'
+            : pathname === item.href || pathname.startsWith(item.href + '/')
         const Icon = item.icon
         return (
           <Link
