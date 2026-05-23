@@ -43,6 +43,7 @@ async function handle(req: NextRequest) {
 
   const generated: string[] = []
   const skipped: string[] = []
+  const failed: string[] = []
 
   for (const tenant of candidates) {
     if (!tenant.plan || !tenant.subscription_end_at) {
@@ -69,31 +70,35 @@ async function handle(req: NextRequest) {
       continue
     }
 
-    const invoice = await generateInvoice({
-      tenantId: tenant.id,
-      tenantSlug: tenant.slug,
-      planPrice: tenant.plan.price.toString(),
-      periodStart: nextPeriodStart,
-      periodEnd: nextPeriodEnd,
-      now,
-    })
+    try {
+      const invoice = await generateInvoice({
+        tenantId: tenant.id,
+        tenantSlug: tenant.slug,
+        planPrice: tenant.plan.price.toString(),
+        periodStart: nextPeriodStart,
+        periodEnd: nextPeriodEnd,
+        now,
+      })
 
-    await writeAuditLog({
-      action: "invoice.auto_generated",
-      tenantId: tenant.id,
-      resource: `invoice:${invoice.id}`,
-      metadata: {
-        invoice_number: invoice.invoice_number,
-        amount: invoice.amount.toString(),
-        plan_name: tenant.plan.name,
-        plan_price: tenant.plan.price.toString(),
-        days_before_expiry: Math.ceil(
-          (tenant.subscription_end_at.getTime() - now.getTime()) / 86_400_000,
-        ),
-      },
-    })
+      await writeAuditLog({
+        action: "invoice.auto_generated",
+        tenantId: tenant.id,
+        resource: `invoice:${invoice.id}`,
+        metadata: {
+          invoice_number: invoice.invoice_number,
+          amount: invoice.amount.toString(),
+          plan_name: tenant.plan.name,
+          days_before_expiry: Math.ceil(
+            (tenant.subscription_end_at!.getTime() - now.getTime()) / 86_400_000,
+          ),
+        },
+      })
 
-    generated.push(invoice.invoice_number)
+      generated.push(invoice.invoice_number)
+    } catch (err) {
+      console.error(`[cron] Failed to generate invoice for tenant ${tenant.slug}:`, err)
+      failed.push(tenant.slug)
+    }
   }
 
   return NextResponse.json({
@@ -101,7 +106,8 @@ async function handle(req: NextRequest) {
     now,
     generated,
     skipped,
-    counts: { generated: generated.length, skipped: skipped.length },
+    failed,
+    counts: { generated: generated.length, skipped: skipped.length, failed: failed.length },
   })
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile } from "fs/promises"
+import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-helpers"
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (
-    user!.role === "TENANT_ADMIN" &&
+    user!.role !== "SUPER_ADMIN" &&
     user!.tenantId !== invoice.tenant_id
   ) {
     return NextResponse.json(
@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
   const filePath = path.join(uploadDir, filename)
 
   const bytes = await file.arrayBuffer()
+  await mkdir(uploadDir, { recursive: true })
   await writeFile(filePath, Buffer.from(bytes))
 
   const proofUrl = `/uploads/payment-proofs/${filename}`
