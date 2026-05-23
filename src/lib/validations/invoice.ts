@@ -1,12 +1,17 @@
 import { z } from "zod"
 
-export const createInvoiceSchema = z.object({
-  tenant_id: z.string().uuid("tenant_id harus UUID"),
-  plan_id: z.string().uuid("plan_id harus UUID"),
-  period_start: z.string().datetime("period_start harus ISO datetime"),
-  period_end: z.string().datetime("period_end harus ISO datetime"),
-  notes: z.string().max(500).nullable().optional(),
-})
+export const createInvoiceSchema = z
+  .object({
+    tenant_id: z.string().uuid("tenant_id harus UUID"),
+    plan_id: z.string().uuid("plan_id harus UUID"),
+    period_start: z.string().datetime("period_start harus ISO datetime"),
+    period_end: z.string().datetime("period_end harus ISO datetime"),
+    notes: z.string().max(500).nullable().optional(),
+  })
+  .refine(
+    (d) => new Date(d.period_end) > new Date(d.period_start),
+    { message: "period_end harus setelah period_start", path: ["period_end"] },
+  )
 
 export const verifyPaymentSchema = z.object({
   payment_method: z.string().min(2, "Metode pembayaran minimal 2 karakter").max(100),
