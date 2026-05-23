@@ -13,6 +13,7 @@ vi.mock("@/lib/prisma", () => ({
     tenant: {
       update: vi.fn(),
     },
+    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   },
 }))
 
@@ -30,6 +31,7 @@ const mockPrisma = prisma as unknown as {
   tenant: {
     update: ReturnType<typeof vi.fn>
   }
+  $transaction: ReturnType<typeof vi.fn>
 }
 
 beforeEach(() => {

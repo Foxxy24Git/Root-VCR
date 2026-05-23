@@ -94,7 +94,7 @@ export async function verifyPayment(params: VerifyPaymentParams) {
 
   const now = new Date()
 
-  const [updated] = await Promise.all([
+  const [updated] = await prisma.$transaction([
     prisma.subscriptionInvoice.update({
       where: { id: invoiceId },
       data: {
