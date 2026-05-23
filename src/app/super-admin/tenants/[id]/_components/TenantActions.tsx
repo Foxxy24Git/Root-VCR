@@ -10,6 +10,7 @@ import {
   Trash2,
   Loader2,
   X,
+  Plus,
 } from "lucide-react"
 import {
   Dialog,
@@ -301,6 +302,150 @@ export function TenantActions({ tenantId, isActive, isTrial }: Props) {
                 <Trash2 className="w-3.5 h-3.5 inline mr-1" />
               )}
               Hapus
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+export function GenerateInvoiceButton({ tenantId }: { tenantId: string }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [planId, setPlanId] = useState("")
+  const [periodStart, setPeriodStart] = useState("")
+  const [periodEnd, setPeriodEnd] = useState("")
+  const [plans, setPlans] = useState<{ id: string; name: string; price: string }[]>([])
+
+  async function openModal() {
+    setOpen(true)
+    setErrorMsg(null)
+    const res = await fetch("/api/super-admin/plans?includeInactive=false")
+    if (res.ok) {
+      const data = await res.json()
+      setPlans(
+        (data.plans as { id: string; name: string; price: string; is_trial: boolean }[]).filter(
+          (p) => !p.is_trial,
+        ),
+      )
+    }
+  }
+
+  async function handleGenerate() {
+    if (!planId || !periodStart || !periodEnd) {
+      setErrorMsg("Semua field wajib diisi")
+      return
+    }
+    setBusy(true)
+    setErrorMsg(null)
+    try {
+      const res = await fetch("/api/super-admin/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_id: tenantId,
+          plan_id: planId,
+          period_start: new Date(periodStart).toISOString(),
+          period_end: new Date(periodEnd).toISOString(),
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data?.message ?? "Gagal membuat invoice")
+        return
+      }
+      setOpen(false)
+      router.refresh()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={openModal}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium hover:bg-violet-100 dark:hover:bg-violet-900/50"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Generate Invoice
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Invoice Manual</DialogTitle>
+            <DialogDescription>
+              Buat invoice subscription baru untuk tenant ini.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                Plan
+              </label>
+              <select
+                value={planId}
+                onChange={(e) => setPlanId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Pilih plan...</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — Rp {Number(p.price).toLocaleString("id-ID")}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Periode Mulai
+                </label>
+                <input
+                  type="date"
+                  value={periodStart}
+                  onChange={(e) => setPeriodStart(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Periode Akhir
+                </label>
+                <input
+                  type="date"
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            {errorMsg && (
+              <p className="text-xs text-red-600 dark:text-red-400">{errorMsg}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={busy}
+              className="px-4 py-2 rounded-lg text-sm bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60"
+            >
+              {busy ? (
+                <Loader2 className="w-3.5 h-3.5 inline mr-1 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5 inline mr-1" />
+              )}
+              Generate
             </button>
           </DialogFooter>
         </DialogContent>

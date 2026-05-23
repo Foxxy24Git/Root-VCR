@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/tabs"
 import { requireSuperAdmin } from "@/lib/api-helpers"
 import { prisma } from "@/lib/prisma"
-import { TenantActions } from "./_components/TenantActions"
+import { TenantActions, GenerateInvoiceButton } from "./_components/TenantActions"
 import { MikroTikTestButton } from "./_components/MikroTikTestButton"
 import { InvoiceStatusBadge } from "@/app/super-admin/_components/InvoiceStatusBadge"
 
@@ -451,6 +451,7 @@ export default async function TenantDetailPage({
                     <th className="text-right font-semibold px-5 py-3">Jumlah</th>
                     <th className="text-left font-semibold px-5 py-3">Status</th>
                     <th className="text-left font-semibold px-5 py-3">Dibayar</th>
+                    <th className="text-right font-semibold px-5 py-3">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -471,11 +472,28 @@ export default async function TenantDetailPage({
                       <td className="px-5 py-3 text-slate-500 dark:text-slate-400 text-xs">
                         {dateTimeFmt(inv.paid_at)}
                       </td>
+                      <td className="px-5 py-3 text-right">
+                        <Link
+                          href={`/super-admin/invoices/${inv.id}`}
+                          className="inline-flex items-center px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                        >
+                          Detail
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 px-5 py-3">
+              <Link
+                href={`/super-admin/invoices?tenantId=${tenant.id}`}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Lihat semua invoice tenant ini →
+              </Link>
+              <GenerateInvoiceButton tenantId={tenant.id} />
+            </div>
           </div>
         </TabsContent>
 
