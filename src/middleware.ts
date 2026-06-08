@@ -27,6 +27,11 @@ export default auth((req) => {
     pathname === "/login" || pathname === "/super-admin/login"
   const isNextAuthRoute = pathname.startsWith("/api/auth")
 
+  // Public health probe (deploy scripts, uptime monitoring) — no session needed.
+  if (pathname === "/api/health") {
+    return NextResponse.next()
+  }
+
   if (isLoginPage || isNextAuthRoute) {
     // Logged-in user hitting any login page → redirect ke dashboard sesuai role
     if (isLoginPage && session) {

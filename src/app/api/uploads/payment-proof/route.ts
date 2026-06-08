@@ -4,12 +4,18 @@ import path from "path"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-helpers"
 import { writeAuditLog } from "@/lib/audit"
+import { assertSameOrigin, enforceRateLimit } from "@/lib/security"
 
 const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"]
 const ALLOWED_EXTS = ["jpg", "jpeg", "png", "pdf"]
 
 export async function POST(req: NextRequest) {
+  const csrf = assertSameOrigin(req)
+  if (csrf) return csrf
+  const limited = enforceRateLimit(req, "payment-proof.upload", { limit: 10, windowMs: 60_000 })
+  if (limited) return limited
+
   const { user, error } = await requireAuth()
   if (error) return error
 

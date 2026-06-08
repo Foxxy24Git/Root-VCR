@@ -31,4 +31,24 @@ export const authConfig = {
     signIn: "/login",
     error: "/login",
   },
+  // Trust the X-Forwarded-Host from the reverse proxy (Caddy/nginx) in prod.
+  trustHost: true,
+  // Secure cookies in production (requires HTTPS — enforced at the proxy).
+  useSecureCookies: process.env.NODE_ENV === "production",
+  cookies: {
+    // SameSite=lax blocks cross-site POSTs from carrying the session cookie,
+    // which is the primary CSRF defence for session-authenticated mutations.
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 } satisfies NextAuthConfig

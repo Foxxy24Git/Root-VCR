@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { Prisma } from "@prisma/client"
+import { Prisma, PrismaClient } from "@prisma/client"
 
 /**
  * Models yang punya kolom `tenant_id` (per schema 2026-05-22).
@@ -52,12 +52,12 @@ function isTenantScoped(model: string | undefined): boolean {
  * Untuk model GLOBAL (Tenant, Plan, BankAccount) gunakan `prisma` langsung —
  * extension ini hanya intercept model yang ada di whitelist `TENANT_SCOPED_MODELS`.
  */
-export function getTenantPrisma(tenantId: string) {
+export function getTenantPrisma(tenantId: string, client: PrismaClient = prisma) {
   if (!tenantId) {
     throw new Error("getTenantPrisma: tenantId wajib diisi")
   }
 
-  return prisma.$extends({
+  return client.$extends({
     name: "tenant-scope",
     query: {
       $allModels: {

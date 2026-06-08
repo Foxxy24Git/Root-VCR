@@ -4,11 +4,17 @@ import { prisma } from "@/lib/prisma"
 import { generateVoucherSchema } from "@/lib/validations/voucher"
 import { generateVoucherCode, calculateResellerPrice, generateRandomPassword } from "@/lib/utils"
 import { createHotspotUser } from "@/services/mikrotik.service"
+import { assertSameOrigin, enforceRateLimit } from "@/lib/security"
 
 // POST /api/vouchers/generate
 // Tenant Admin: gratis (tidak potong wallet)
 // Reseller: potong wallet sesuai harga reseller
 export async function POST(req: NextRequest) {
+  const csrf = assertSameOrigin(req)
+  if (csrf) return csrf
+  const limited = enforceRateLimit(req, "voucher.generate", { limit: 20, windowMs: 60_000 })
+  if (limited) return limited
+
   const { ctx, db, error } = await getTenantScope(
     req.nextUrl.searchParams.get("tenantId")
   )

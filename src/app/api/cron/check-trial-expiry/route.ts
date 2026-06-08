@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { writeAuditLog } from "@/lib/audit"
+import { needsTrialSuspension } from "@/lib/trial"
 
 /**
  * POST /api/cron/check-trial-expiry
@@ -37,14 +38,20 @@ async function handle(req: NextRequest) {
   const threeDaysFromNow = new Date(now.getTime() + 3 * 86_400_000)
 
   // 1) Tenant trial yang sudah expired & masih aktif → auto-suspend
-  const toSuspend = await prisma.tenant.findMany({
+  const trialCandidates = await prisma.tenant.findMany({
     where: {
       is_trial: true,
       is_active: true,
-      trial_end_at: { lt: now },
     },
-    select: { id: true, slug: true, trial_end_at: true },
+    select: {
+      id: true,
+      slug: true,
+      trial_end_at: true,
+      is_trial: true,
+      is_active: true,
+    },
   })
+  const toSuspend = trialCandidates.filter((t) => needsTrialSuspension(t, now))
 
   for (const t of toSuspend) {
     await prisma.tenant.update({

@@ -7,6 +7,22 @@ import {
   superAdminLoginSchema,
 } from "@/lib/validations/auth"
 import { authConfig } from "./auth.config"
+import { checkRateLimit } from "@/lib/rate-limit"
+import { tenantCanLogin, userCanLogin } from "@/lib/login-eligibility"
+
+/**
+ * Per-IP login throttle. Blocks brute-force credential stuffing: max 10 attempts
+ * per 5 minutes per IP. Returns true when the attempt is allowed.
+ */
+function loginAttemptAllowed(request: Request | undefined): boolean {
+  const fwd = request?.headers.get("x-forwarded-for")
+  const ip =
+    fwd?.split(",")[0]?.trim() ||
+    request?.headers.get("x-real-ip") ||
+    request?.headers.get("cf-connecting-ip") ||
+    "unknown"
+  return checkRateLimit(`login:${ip}`, { limit: 10, windowMs: 5 * 60_000 }).ok
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -22,7 +38,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        if (!loginAttemptAllowed(request)) return null
         const parsed = tenantLoginSchema.safeParse(credentials)
         if (!parsed.success) return null
         const { tenantCode, email, password } = parsed.data
@@ -31,13 +48,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { slug: tenantCode.toLowerCase() },
           select: { id: true, slug: true, is_active: true },
         })
-        if (!tenant || !tenant.is_active) return null
+        if (!tenant || !tenantCanLogin(tenant)) return null
 
         const user = await prisma.user.findFirst({
           where: { email, tenant_id: tenant.id },
         })
         if (!user) return null
-        if (!user.is_active || user.is_frozen) return null
+        if (!userCanLogin(user)) return null
         // SUPER_ADMIN tidak boleh login lewat tenant endpoint
         if (user.role === "SUPER_ADMIN") return null
 
@@ -65,14 +82,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        if (!loginAttemptAllowed(request)) return null
         const parsed = superAdminLoginSchema.safeParse(credentials)
         if (!parsed.success) return null
         const { email, password } = parsed.data
 
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user) return null
-        if (!user.is_active || user.is_frozen) return null
+        if (!userCanLogin(user)) return null
         if (user.role !== "SUPER_ADMIN") return null
 
         const ok = await bcrypt.compare(password, user.password_hash)
