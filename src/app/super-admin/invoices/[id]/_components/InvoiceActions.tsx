@@ -19,7 +19,7 @@ interface Props {
   proofUrl: string | null
 }
 
-export function InvoiceActions({ invoiceId, status, proofUrl: _proofUrl }: Props) {
+export function InvoiceActions({ invoiceId, status }: Props) {
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
