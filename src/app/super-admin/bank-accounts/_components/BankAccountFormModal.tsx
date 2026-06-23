@@ -212,6 +212,7 @@ export function BankAccountFormModal({ account, onClose, onSaved }: Props) {
             </label>
           </div>
 
+          </div>
           <div className="shrink-0 px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2">
             <button
               type="button"
