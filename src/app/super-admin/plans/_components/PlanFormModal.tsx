@@ -112,14 +112,14 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget && !loading) onClose()
       }}
     >
-      <div className="relative flex flex-col w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95vh] overflow-hidden">
+      <div className="relative w-full sm:max-w-2xl mx-auto my-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="shrink-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
               <Package className="w-5 h-5 text-white" />
@@ -146,8 +146,8 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="p-6 space-y-5">
           {topError && (
             <div className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -297,7 +297,7 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
 
           </div>
           {/* Footer */}
-          <div className="shrink-0 px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2">
+          <div className="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2 rounded-b-2xl">
             <button
               type="button"
               onClick={onClose}

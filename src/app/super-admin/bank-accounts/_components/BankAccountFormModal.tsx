@@ -92,13 +92,13 @@ export function BankAccountFormModal({ account, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget && !loading) onClose()
       }}
     >
-      <div className="relative w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between">
+      <div className="relative w-full sm:max-w-xl mx-auto my-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
               <Landmark className="w-5 h-5 text-white" />
@@ -211,7 +211,7 @@ export function BankAccountFormModal({ account, onClose, onSaved }: Props) {
             </label>
           </div>
 
-          <div className="sticky bottom-0 -mx-6 px-6 pt-4 pb-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2">
+          <div className="px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2 rounded-b-2xl">
             <button
               type="button"
               onClick={onClose}
