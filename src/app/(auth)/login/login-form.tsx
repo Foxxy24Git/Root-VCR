@@ -40,7 +40,7 @@ export function LoginForm() {
         const { user } = await meRes.json()
         const dest =
           callbackUrl ??
-          (user.role === "admin" ? "/admin/dashboard" : "/reseller/dashboard")
+          (user.role === "TENANT_ADMIN" ? "/admin/dashboard" : "/reseller/dashboard")
         router.push(dest)
         router.refresh()
       } else {
