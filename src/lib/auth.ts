@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import {
-  tenantLoginSchema,
+  loginSchema,
   superAdminLoginSchema,
 } from "@/lib/validations/auth"
 import { authConfig } from "./auth.config"
@@ -34,29 +34,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       id: "tenant-login",
       name: "Tenant Login",
       credentials: {
-        tenantCode: { label: "Kode Tenant", type: "text" },
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, request) {
         if (!loginAttemptAllowed(request)) return null
-        const parsed = tenantLoginSchema.safeParse(credentials)
+        const parsed = loginSchema.safeParse(credentials)
         if (!parsed.success) return null
-        const { tenantCode, email, password } = parsed.data
+        const { email, password } = parsed.data
 
-        const tenant = await prisma.tenant.findUnique({
-          where: { slug: tenantCode.toLowerCase() },
-          select: { id: true, slug: true, is_active: true },
-        })
-        if (!tenant || !tenantCanLogin(tenant)) return null
-
-        const user = await prisma.user.findFirst({
-          where: { email, tenant_id: tenant.id },
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { tenant: { select: { id: true, slug: true, is_active: true } } }
         })
         if (!user) return null
         if (!userCanLogin(user)) return null
         // SUPER_ADMIN tidak boleh login lewat tenant endpoint
         if (user.role === "SUPER_ADMIN") return null
+
+        const tenant = user.tenant
+        if (!tenant || !tenantCanLogin(tenant)) return null
 
         const ok = await bcrypt.compare(password, user.password_hash)
         if (!ok) return null

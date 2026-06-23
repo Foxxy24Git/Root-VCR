@@ -23,7 +23,7 @@ export function LoginForm() {
     setLoading(true)
 
     try {
-      const result = await signIn("credentials", {
+      const result = await signIn("tenant-login", {
         email,
         password,
         redirect: false,

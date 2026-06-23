@@ -117,9 +117,9 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
         if (e.target === e.currentTarget && !loading) onClose()
       }}
     >
-      <div className="relative w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95vh] overflow-y-auto">
+      <div className="relative flex flex-col w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[95vh] overflow-hidden">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between">
+        <div className="shrink-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
               <Package className="w-5 h-5 text-white" />
@@ -146,7 +146,8 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {topError && (
             <div className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -294,8 +295,9 @@ export function PlanFormModal({ plan, onClose, onSaved }: Props) {
             <Toggle checked={isActive} onChange={setIsActive} />
           </div>
 
+          </div>
           {/* Footer */}
-          <div className="sticky bottom-0 -mx-6 px-6 pt-4 pb-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2">
+          <div className="shrink-0 px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
