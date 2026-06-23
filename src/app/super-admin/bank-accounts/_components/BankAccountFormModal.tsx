@@ -97,7 +97,7 @@ export function BankAccountFormModal({ account, onClose, onSaved }: Props) {
         if (e.target === e.currentTarget && !loading) onClose()
       }}
     >
-      <div className="relative flex flex-col w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[90vh]">
+      <div className="relative flex flex-col w-full sm:max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden">
         <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700/60 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
@@ -125,7 +125,7 @@ export function BankAccountFormModal({ account, onClose, onSaved }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden min-h-0">
-          <div className="overflow-y-auto p-6 space-y-4">
+          <div className="overflow-y-auto min-h-0 p-6 space-y-4">
           {topError && (
             <div className="flex items-start gap-2 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
