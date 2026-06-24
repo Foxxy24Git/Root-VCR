@@ -27,8 +27,12 @@ export default async function AdminVouchersPage({
   const profileFilter = sp.profileId
   const initialTab = (sp.tab === "profiles" || sp.tab === "pppoe") ? sp.tab : "vouchers"
 
+  const tenantId = user.tenantId!
+
   // Build voucher filter
-  const whereCondition: Prisma.VoucherWhereInput = {}
+  const whereCondition: Prisma.VoucherWhereInput = {
+    tenant_id: tenantId,
+  }
   if (statusFilter && statusFilter !== "all") whereCondition.status = statusFilter as Prisma.EnumVoucherStatusFilter
   if (profileFilter && profileFilter !== "all") whereCondition.profile_id = profileFilter
   if (searchFilter) {
@@ -39,7 +43,10 @@ export default async function AdminVouchersPage({
   }
 
   const [profiles, vouchers, totalVouchers] = await Promise.all([
-    prisma.profile.findMany({ orderBy: { price: "asc" } }),
+    prisma.profile.findMany({
+      where: { tenant_id: tenantId },
+      orderBy: { price: "asc" },
+    }),
     prisma.voucher.findMany({
       where: whereCondition,
       orderBy: { generated_at: "desc" },

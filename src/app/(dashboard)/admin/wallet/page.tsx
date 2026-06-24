@@ -13,14 +13,18 @@ export default async function AdminWalletPage() {
   const { user, error } = await requireAdmin()
   if (error || !user) redirect("/login")
 
+  const tenantId = user.tenantId!
+
   const [wallets, aggregate] = await Promise.all([
     prisma.wallet.findMany({
+      where: { tenant_id: tenantId },
       include: {
         user: { select: { name: true, email: true, is_active: true } }
       },
       orderBy: { balance: 'desc' }
     }),
     prisma.wallet.aggregate({
+      where: { tenant_id: tenantId },
       _sum: { balance: true, total_topup: true, total_spent: true }
     })
   ])

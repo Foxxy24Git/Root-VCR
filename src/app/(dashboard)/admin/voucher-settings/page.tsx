@@ -22,6 +22,7 @@ export default async function VoucherSettingsPage() {
 
   const rows = await prisma.setting.findMany({
     where: {
+      tenant_id: user.tenantId!,
       key: {
         in: [
           "voucher_prefix",

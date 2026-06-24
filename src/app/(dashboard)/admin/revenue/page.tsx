@@ -26,7 +26,11 @@ export default async function AdminRevenuePage({ searchParams }: PageProps) {
   const endOfMonth = new Date(year, mon, 0, 23, 59, 59, 999)
 
   const vouchers = await prisma.voucher.findMany({
-    where: { generated_at: { gte: startOfMonth, lte: endOfMonth }, source: "reseller" },
+    where: {
+      tenant_id: user.tenantId!,
+      generated_at: { gte: startOfMonth, lte: endOfMonth },
+      source: "reseller"
+    },
     select: { generated_at: true, price_charged: true },
   })
 

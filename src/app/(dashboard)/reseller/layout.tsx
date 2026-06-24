@@ -1,10 +1,15 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { prisma } from '@/lib/prisma'
+import { getSessionUser } from '@/lib/api-helpers'
 
-async function getLogoSettings() {
+async function getLogoSettings(tenantId?: string | null) {
+  if (!tenantId) return { logoUrl: undefined, companyName: undefined }
   try {
     const rows = await prisma.setting.findMany({
-      where: { key: { in: ['company_logo_url', 'company_name'] } },
+      where: {
+        tenant_id: tenantId,
+        key: { in: ['company_logo_url', 'company_name'] }
+      },
     })
     const map: Record<string, string> = {}
     rows.forEach(r => { if (r.value) map[r.key] = r.value })
@@ -15,7 +20,8 @@ async function getLogoSettings() {
 }
 
 export default async function ResellerLayout({ children }: { children: React.ReactNode }) {
-  const { logoUrl, companyName } = await getLogoSettings()
+  const user = await getSessionUser()
+  const { logoUrl, companyName } = await getLogoSettings(user?.tenantId)
   return (
     <AppShell role="reseller" logoUrl={logoUrl} companyName={companyName}>
       {children}
