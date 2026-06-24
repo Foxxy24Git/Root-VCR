@@ -893,7 +893,7 @@ export function AdminSettingsForm({ adminUser, settings }: AdminSettingsFormProp
             }`}
           >
             {tab.icon}
-            <span className="hidden xs:inline lg:inline">{tab.label}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </nav>
