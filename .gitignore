@@ -38,3 +38,8 @@ next-env.d.ts
 
 # git worktrees
 .worktrees/
+
+# whatsapp-bot (Baileys)
+whatsapp-bot/node_modules/
+whatsapp-bot/auth_state/
+whatsapp-bot/jid_map.json

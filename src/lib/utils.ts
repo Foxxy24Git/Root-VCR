@@ -54,6 +54,14 @@ export function generateRandomPassword(length: number): string {
 }
 
 /**
+ * Format a number as Indonesian Rupiah, e.g. 50000 → "Rp 50.000".
+ * Rounds to whole rupiah (no fractional cents).
+ */
+export function formatRupiah(amount: number): string {
+  return `Rp ${amount.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`
+}
+
+/**
  * Calculate reseller price given the base price and fee percentage (discount).
  * Example: basePrice=10000, feePercentage=15 → resellerPrice=8500
  */

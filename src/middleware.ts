@@ -32,6 +32,13 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
+  // Internal WhatsApp-bot API. These are server-to-server, authenticated by the
+  // `x-bot-secret` header inside each handler (see @/lib/bot-auth), not by a
+  // NextAuth session — so let them through the session gate here.
+  if (pathname.startsWith("/api/bot")) {
+    return NextResponse.next()
+  }
+
   if (isLoginPage || isNextAuthRoute) {
     // Logged-in user hitting any login page → redirect ke dashboard sesuai role
     if (isLoginPage && session) {
